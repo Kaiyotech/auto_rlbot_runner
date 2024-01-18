@@ -70,9 +70,9 @@ class ContinousGames():
         num_cars_fh.write("used")
         num_cars_fh.close()
         num_players = random.choice([2, 4, 6]) if mode is None else mode
-        # bot_bundles = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis"))
-        bot_bundles = list(scan_directory_for_bot_configs(
-            "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Nexto"))
+        bot_bundles = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis"))
+        # bot_bundles = list(scan_directory_for_bot_configs(
+            # "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Nexto"))
         bots = []
         mid = num_players // 2
         for i in range(num_players):

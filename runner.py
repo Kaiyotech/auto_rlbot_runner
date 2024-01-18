@@ -18,6 +18,7 @@ class ContinousGames():
     def __init__(self):
         self.active_thread: Optional[Thread] = None
         self.nick = 'ContinousGames'
+        self.allow_overtime = False
 
     async def event_ready(self):
         print(f'Ready | {self.nick}')
@@ -47,7 +48,7 @@ class ContinousGames():
             print("Checking if round ended")
             try:
                 match_runner.sm.game_interface.update_live_data_packet(packet)
-                if packet.game_info.is_match_ended:
+                if packet.game_info.is_match_ended or (packet.game_info.is_overtime and not self.allow_overtime):
                     print("Match ended. Starting new round...")
                     await self.start_round()
                     print("New round started")
@@ -59,7 +60,9 @@ class ContinousGames():
         num_cars_fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_mode.txt", "r+")
         mode = None
         try:
-            mode = int(num_cars_fh.read()) * 2
+            mode = num_cars_fh.read()
+            mode = mode.split("!changemode")[1].strip()
+            mode = int(mode) * 2
             if mode not in [2, 4, 6]:
                 mode = None
         except:
@@ -79,6 +82,7 @@ class ContinousGames():
 
         fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_map.txt", "r+")
         game_map = fh.read()
+        game_map = game_map.split("!newmap")[1].strip()
         if game_map not in match_runner.STANDARD_MAPS:
             game_map = None
         fh.close()

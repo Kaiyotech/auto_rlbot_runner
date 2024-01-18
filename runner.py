@@ -1,17 +1,9 @@
 import asyncio
-import os
-from collections import defaultdict
-import csv
 import random
-import string
-import json
-import time
-from dataclasses import dataclass
 from threading import Thread
-from typing import List, Dict, Set, Optional
+from typing import List, Optional
 
-from rlbot.matchconfig.loadout_config import LoadoutConfig
-from rlbot.matchconfig.match_config import PlayerConfig, ScriptConfig
+from rlbot.matchconfig.match_config import PlayerConfig
 from rlbot.parsing.bot_config_bundle import BotConfigBundle
 from rlbot.parsing.directory_scanner import scan_directory_for_bot_configs
 from rlbot.utils.structures.game_data_struct import GameTickPacket
@@ -42,14 +34,14 @@ class ContinousGames():
 
         return bot
 
-    def start_match(self, bots: List[PlayerConfig]):
+    def start_match(self, bots: List[PlayerConfig], map):
         if self.active_thread and self.active_thread.is_alive():
             self.active_thread.join(3.0)
-        self.active_thread = Thread(target=run_match, args=(bots, None), daemon=True)
+        self.active_thread = Thread(target=run_match, args=(bots, None, map), daemon=True)
         self.active_thread.start()
 
     async def periodically_check_match_ended(self):
-        packet = GameTickPacket()
+        packet = GameTickPacket()  # noqa
         while True:
             await asyncio.sleep(10.0)
             print("Checking if round ended")
@@ -57,7 +49,7 @@ class ContinousGames():
                 match_runner.sm.game_interface.update_live_data_packet(packet)
                 if packet.game_info.is_match_ended:
                     print("Match ended. Starting new round...")
-                    self.start_round()
+                    await self.start_round()
                     print("New round started")
                     break
             except Exception as ex:
@@ -67,7 +59,7 @@ class ContinousGames():
         num_cars_fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_mode.txt", "r+")
         mode = None
         try:
-            mode = int(num_cars_fh.read())
+            mode = int(num_cars_fh.read()) * 2
             if mode not in [2, 4, 6]:
                 mode = None
         except:
@@ -75,7 +67,9 @@ class ContinousGames():
         num_cars_fh.write("used")
         num_cars_fh.close()
         num_players = random.choice([2, 4, 6]) if mode is None else mode
-        bot_bundles = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis"))
+        # bot_bundles = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis"))
+        bot_bundles = list(scan_directory_for_bot_configs(
+            "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Nexto"))
         bots = []
         mid = num_players // 2
         for i in range(num_players):
@@ -83,7 +77,13 @@ class ContinousGames():
             bots.append(self.make_bot_config(bot_bundles[0], 0, team_num))
         # bots = [self.make_bot_config(bundle) for bundle in bot_bundles]
 
-        self.start_match(bots)
+        fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_map.txt", "r+")
+        game_map = fh.read()
+        if game_map not in match_runner.STANDARD_MAPS:
+            game_map = None
+        fh.close()
+
+        self.start_match(bots, game_map)
         await asyncio.sleep(10)
 
         await asyncio.create_task(self.periodically_check_match_ended())

@@ -1,6 +1,6 @@
 import random
 from dataclasses import dataclass
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, AnyStr
 
 from rlbot.matchconfig.loadout_config import LoadoutConfig
 from rlbot.matchconfig.match_config import PlayerConfig, MatchConfig, MutatorConfig, ScriptConfig
@@ -40,6 +40,17 @@ STANDARD_MAPS = [
     "NeonFields",
     "DFHStadium_Circuit",
     "DeadeyeCanyon",
+    "StarbaseArc_Aftermath",
+    "Wasteland_Night",
+    "BeckwithPark_GothamNight",
+    "ForbiddenTemple_Day",
+    "UrbanCentral_Haunted",
+    "ChampionsField_NFL",
+    "BeckwithPark_Snowy",
+    "NeoTokyo_Comic",
+    "UtopiaColiseum_Gilded",
+    "SovereignHeights",
+    "Farmstead_Spooky"
 ]
 
 
@@ -61,10 +72,13 @@ def get_fresh_setup_manager():
     return sm
 
 
-def run_match(bot_configs: List[PlayerConfig], _script_configs: List[ScriptConfig]):
+def run_match(bot_configs: List[PlayerConfig], _script_configs: List[ScriptConfig], game_map: AnyStr):
     match_config = MatchConfig()
     match_config.game_mode = 'Soccer'
-    match_config.game_map = get_random_standard_map()
+    if game_map is None:
+        match_config.game_map = get_random_standard_map()
+    else:
+        match_config.game_map = game_map
     match_config.enable_state_setting = True
 
     match_config.player_configs = bot_configs

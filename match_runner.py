@@ -83,9 +83,14 @@ def run_match(bot_configs: List[PlayerConfig], _script_configs: List[ScriptConfi
 
     match_config.player_configs = bot_configs
     match_config.mutators = MutatorConfig()
+    # match_config.mutators.
+    match_config.auto_save_replay = False
+    match_config.instant_start = False
+    match_config.skip_replays = True
 
     sm = get_fresh_setup_manager()
     sm.early_start_seconds = 5
+
     sm.connect_to_game()
     sm.load_match_config(match_config)
     sm.launch_early_start_bot_processes()

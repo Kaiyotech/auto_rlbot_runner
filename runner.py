@@ -19,6 +19,7 @@ class ContinousGames():
         self.active_thread: Optional[Thread] = None
         self.nick = 'ContinousGames'
         self.allow_overtime = False
+        self.allowed_modes = [2]
 
     async def event_ready(self):
         print(f'Ready | {self.nick}')
@@ -63,13 +64,14 @@ class ContinousGames():
             mode = num_cars_fh.read()
             mode = mode.split("!changemode")[1].strip()
             mode = int(mode) * 2
-            if mode not in [2, 4, 6]:
+            if mode not in self.allowed_modes:
                 mode = None
         except:
+            mode = None
             pass
         num_cars_fh.write("used")
         num_cars_fh.close()
-        num_players = random.choice([2, 4, 6]) if mode is None else mode
+        num_players = random.choice(self.allowed_modes) if mode is None else mode
         bot_bundles = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis"))
         # bot_bundles = list(scan_directory_for_bot_configs(
             # "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Nexto"))
@@ -79,7 +81,6 @@ class ContinousGames():
             team_num = 0 if i < mid else 1
             bots.append(self.make_bot_config(bot_bundles[0], 0, team_num))
         # bots = [self.make_bot_config(bundle) for bundle in bot_bundles]
-
         fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_map.txt", "r+")
         game_map = fh.read()
         game_map = game_map.split("!newmap")[1].strip()
@@ -88,7 +89,7 @@ class ContinousGames():
         fh.close()
 
         self.start_match(bots, game_map)
-        await asyncio.sleep(10)
+        await asyncio.sleep(60)
 
         await asyncio.create_task(self.periodically_check_match_ended())
 

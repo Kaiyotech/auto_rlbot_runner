@@ -6,9 +6,11 @@ from typing import List, Optional
 from rlbot.matchconfig.match_config import PlayerConfig
 from rlbot.parsing.bot_config_bundle import BotConfigBundle
 from rlbot.parsing.directory_scanner import scan_directory_for_bot_configs
+from rlbot.utils.game_state_util import Vector3
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 # from twitchio.ext import commands
 # from twitchio import Context
+from pywinauto.application import Application
 
 from match_runner import run_match
 import match_runner
@@ -45,11 +47,21 @@ class ContinousGames():
     async def periodically_check_match_ended(self):
         packet = GameTickPacket()  # noqa
         while True:
+            previous_ball_pos = Vector3(0, 0, -100)
+            previous_player_pos = Vector3(0, 0, 0)
             await asyncio.sleep(10.0)
             print("Checking if round ended")
+            no_touch_ball = False
+            stuck_car = False
             try:
                 match_runner.sm.game_interface.update_live_data_packet(packet)
-                if packet.game_info.is_match_ended or (packet.game_info.is_overtime and not self.allow_overtime):
+                if packet.game_ball.physics.location == previous_ball_pos and previous_ball_pos.x != 0 and \
+                        previous_ball_pos.y != 0:
+                    no_touch_ball = True
+                if packet.game_cars[0].physics.location == previous_player_pos:
+                    stuck_car = True
+                if packet.game_info.is_match_ended or (packet.game_info.is_overtime and not self.allow_overtime) or \
+                        no_touch_ball or stuck_car:
                     print("Match ended. Starting new round...")
                     await self.start_round()
                     print("New round started")
@@ -59,7 +71,6 @@ class ContinousGames():
 
     async def start_round(self):
         num_cars_fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_mode.txt", "r+")
-        mode = None
         try:
             mode = num_cars_fh.read()
             mode = mode.split("!changemode")[1].strip()
@@ -83,15 +94,29 @@ class ContinousGames():
         # bots = [self.make_bot_config(bundle) for bundle in bot_bundles]
         fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_map.txt", "r+")
         game_map = fh.read()
-        game_map = game_map.split("!newmap")[1].strip()
+        try:
+            game_map = game_map.split("!newmap")[1].strip()
+        except:
+            game_map = None
         if game_map not in match_runner.STANDARD_MAPS:
             game_map = None
         fh.close()
 
         self.start_match(bots, game_map)
+        await asyncio.sleep(20)
+        hide_hud_macro()
         await asyncio.sleep(60)
 
         await asyncio.create_task(self.periodically_check_match_ended())
+
+
+# from EastVillage
+def hide_hud_macro():
+    print("hiding hud")
+    app = Application()
+    app.connect(title_re='Rocket League.*')
+    win = app.window(title_re='Rocket League.*')
+    win.type_keys("{h down}" "{h up}")
 
 
 if __name__ == '__main__':

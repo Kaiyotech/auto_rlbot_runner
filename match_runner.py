@@ -7,6 +7,7 @@ from rlbot.matchconfig.match_config import PlayerConfig, MatchConfig, MutatorCon
 from rlbot.parsing.incrementing_integer import IncrementingInteger
 from rlbot.setup_manager import SetupManager, setup_manager_context
 
+
 STANDARD_MAPS = [
     "DFHStadium",
     "Mannfield",
@@ -90,10 +91,10 @@ def run_match(bot_configs: List[PlayerConfig], _script_configs: List[ScriptConfi
 
     sm = get_fresh_setup_manager()
     sm.early_start_seconds = 5
-
     sm.connect_to_game()
     sm.load_match_config(match_config)
     sm.launch_early_start_bot_processes()
     sm.start_match()
     sm.launch_bot_processes()
     sm.infinite_loop()
+

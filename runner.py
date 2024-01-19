@@ -55,9 +55,9 @@ class ContinousGames():
             stuck_car = False
             try:
                 match_runner.sm.game_interface.update_live_data_packet(packet)
-                if packet.game_ball.physics.location == previous_ball_pos and previous_ball_pos.x != 0 and \
-                        previous_ball_pos.y != 0:
-                    no_touch_ball = True
+                # if packet.game_ball.physics.location == previous_ball_pos and previous_ball_pos.x != 0 and \
+                #         previous_ball_pos.y != 0:
+                #     no_touch_ball = True
                 if packet.game_cars[0].physics.location == previous_player_pos:
                     stuck_car = True
                 if packet.game_info.is_match_ended or (packet.game_info.is_overtime and not self.allow_overtime) or \
@@ -83,14 +83,19 @@ class ContinousGames():
         num_cars_fh.write("used")
         num_cars_fh.close()
         num_players = random.choice(self.allowed_modes) if mode is None else mode
-        bot_bundles = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis"))
+        bot_bundles_0 = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Opti_play_finals_rlbot2023"))
         # bot_bundles = list(scan_directory_for_bot_configs(
             # "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Nexto"))
+        bot_bundles_1 = list(scan_directory_for_bot_configs(
+            "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Nexto"))
         bots = []
         mid = num_players // 2
         for i in range(num_players):
             team_num = 0 if i < mid else 1
-            bots.append(self.make_bot_config(bot_bundles[0], 0, team_num))
+            if team_num == 0:
+                bots.append(self.make_bot_config(bot_bundles_0[0], 0, team_num))
+            else:
+                bots.append(self.make_bot_config(bot_bundles_1[0], 0, team_num))
         # bots = [self.make_bot_config(bundle) for bundle in bot_bundles]
         fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_map.txt", "r+")
         game_map = fh.read()

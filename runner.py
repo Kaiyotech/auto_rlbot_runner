@@ -84,10 +84,14 @@ class ContinousGames():
         num_cars_fh.close()
         num_players = random.choice(self.allowed_modes) if mode is None else mode
         bot_bundles_0 = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Opti_play_finals_rlbot2023"))
+        # bot_bundles_0 = list(
+        #     scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis"))
         # bot_bundles = list(scan_directory_for_bot_configs(
             # "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Nexto"))
         bot_bundles_1 = list(scan_directory_for_bot_configs(
             "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Nexto"))
+        # bot_bundles_1 = list(
+        #     scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis"))
         bots = []
         mid = num_players // 2
         for i in range(num_players):
@@ -108,9 +112,10 @@ class ContinousGames():
         fh.close()
 
         self.start_match(bots, game_map)
-        await asyncio.sleep(20)
+        await asyncio.sleep(30)
         hide_hud_macro()
-        await asyncio.sleep(60)
+        # choose_player_1_macro()
+        await asyncio.sleep(250)
 
         await asyncio.create_task(self.periodically_check_match_ended())
 
@@ -122,6 +127,14 @@ def hide_hud_macro():
     app.connect(title_re='Rocket League.*')
     win = app.window(title_re='Rocket League.*')
     win.type_keys("{h down}" "{h up}")
+
+
+def choose_player_1_macro():
+    print("choose_player_1")
+    app = Application()
+    app.connect(title_re='Rocket League.*')
+    win = app.window(title_re='Rocket League.*')
+    win.type_keys("{1 down}" "{1 up}")
 
 
 if __name__ == '__main__':

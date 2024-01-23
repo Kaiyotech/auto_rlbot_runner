@@ -21,7 +21,7 @@ class ContinousGames():
         self.active_thread: Optional[Thread] = None
         self.nick = 'ContinousGames'
         self.allow_overtime = False
-        self.allowed_modes = [2]
+        self.allowed_modes = [2, 4, 6]
 
     async def event_ready(self):
         print(f'Ready | {self.nick}')
@@ -44,24 +44,57 @@ class ContinousGames():
         self.active_thread = Thread(target=run_match, args=(bots, None, map), daemon=True)
         self.active_thread.start()
 
-    async def periodically_check_match_ended(self):
+    async def periodic_check_started(self):
+        packet = GameTickPacket()  # noqa
+        started = False
+        while not started:
+            await asyncio.sleep(1.0)
+            print("Checking no_touch")
+            no_touch_ball = False
+            stuck_car = False
+            try:
+                match_runner.sm.game_interface.update_live_data_packet(packet)
+                if packet.game_info.is_round_active:
+                    started = True
+                    hide_hud_macro()
+                    choose_player_1_macro()
+            except Exception as ex:
+                print(ex)
+
+    async def periodic_check_no_touch(self):
         packet = GameTickPacket()  # noqa
         while True:
             previous_ball_pos = Vector3(0, 0, -100)
             previous_player_pos = Vector3(0, 0, 0)
+            await asyncio.sleep(30.0)
+            print("Checking no_touch")
+            no_touch_ball = False
+            stuck_car = False
+            try:
+                match_runner.sm.game_interface.update_live_data_packet(packet)
+                if packet.game_ball.physics.location == previous_ball_pos and previous_ball_pos.x != 0 and \
+                        previous_ball_pos.y != 0:
+                    no_touch_ball = True
+                if packet.game_cars[0].physics.location == previous_player_pos:
+                    stuck_car = True
+                if no_touch_ball or stuck_car:
+                    print("car stuck or ball no touch. Starting new round...")
+                    await self.start_round()
+                    print("New round started")
+                    break
+            except Exception as ex:
+                print(ex)
+
+    async def periodically_check_match_ended(self):
+        packet = GameTickPacket()  # noqa
+        while True:
             await asyncio.sleep(10.0)
             print("Checking if round ended")
             no_touch_ball = False
             stuck_car = False
             try:
                 match_runner.sm.game_interface.update_live_data_packet(packet)
-                # if packet.game_ball.physics.location == previous_ball_pos and previous_ball_pos.x != 0 and \
-                #         previous_ball_pos.y != 0:
-                #     no_touch_ball = True
-                if packet.game_cars[0].physics.location == previous_player_pos:
-                    stuck_car = True
-                if packet.game_info.is_match_ended or (packet.game_info.is_overtime and not self.allow_overtime) or \
-                        no_touch_ball or stuck_car:
+                if packet.game_info.is_match_ended or (packet.game_info.is_overtime and not self.allow_overtime):
                     print("Match ended. Starting new round...")
                     await self.start_round()
                     print("New round started")
@@ -83,15 +116,15 @@ class ContinousGames():
         num_cars_fh.write("used")
         num_cars_fh.close()
         num_players = random.choice(self.allowed_modes) if mode is None else mode
-        bot_bundles_0 = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Opti_play_finals_rlbot2023"))
-        # bot_bundles_0 = list(
-        #     scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis"))
+        # bot_bundles_0 = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Opti_play_finals_rlbot2023"))
+        bot_bundles_0 = list(
+            scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis"))
         # bot_bundles = list(scan_directory_for_bot_configs(
             # "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Nexto"))
-        bot_bundles_1 = list(scan_directory_for_bot_configs(
-            "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Nexto"))
-        # bot_bundles_1 = list(
-        #     scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis"))
+        # bot_bundles_1 = list(scan_directory_for_bot_configs(
+        #     "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Nexto"))
+        bot_bundles_1 = list(
+            scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis"))
         bots = []
         mid = num_players // 2
         for i in range(num_players):
@@ -112,10 +145,9 @@ class ContinousGames():
         fh.close()
 
         self.start_match(bots, game_map)
-        await asyncio.sleep(30)
-        hide_hud_macro()
-        # choose_player_1_macro()
-        await asyncio.sleep(250)
+        await asyncio.create_task(self.periodic_check_started())
+        await asyncio.create_task(self.periodic_check_no_touch())
+        await asyncio.sleep(280)
 
         await asyncio.create_task(self.periodically_check_match_ended())
 

@@ -60,30 +60,33 @@ class ContinousGames():
                     choose_player_1_macro()
             except Exception as ex:
                 print(ex)
+                
+    # async def period_checks(self):
+        
 
-    async def periodic_check_no_touch(self):
-        packet = GameTickPacket()  # noqa
-        while True:
-            previous_ball_pos = Vector3(0, 0, -100)
-            previous_player_pos = Vector3(0, 0, 0)
-            await asyncio.sleep(30.0)
-            print("Checking no_touch")
-            no_touch_ball = False
-            stuck_car = False
-            try:
-                match_runner.sm.game_interface.update_live_data_packet(packet)
-                if packet.game_ball.physics.location == previous_ball_pos and previous_ball_pos.x != 0 and \
-                        previous_ball_pos.y != 0:
-                    no_touch_ball = True
-                if packet.game_cars[0].physics.location == previous_player_pos:
-                    stuck_car = True
-                if no_touch_ball or stuck_car:
-                    print("car stuck or ball no touch. Starting new round...")
-                    await self.start_round()
-                    print("New round started")
-                    break
-            except Exception as ex:
-                print(ex)
+    # def periodic_check_no_touch(self):
+        # packet = GameTickPacket()  # noqa
+        # while True:
+            # previous_ball_pos = Vector3(0, 0, -100)
+            # previous_player_pos = Vector3(0, 0, 0)
+            # await asyncio.sleep(30.0)
+            # print("Checking no_touch")
+            # no_touch_ball = False
+            # stuck_car = False
+            # try:
+                # match_runner.sm.game_interface.update_live_data_packet(packet)
+                # if packet.game_ball.physics.location == previous_ball_pos and previous_ball_pos.x != 0 and \
+                        # previous_ball_pos.y != 0:
+                    # no_touch_ball = True
+                # if packet.game_cars[0].physics.location == previous_player_pos:
+                    # stuck_car = True
+                # if no_touch_ball or stuck_car:
+                    # print("car stuck or ball no touch. Starting new round...")
+                    # await self.start_round()
+                    # print("New round started")
+                    # break
+            # except Exception as ex:
+                # print(ex)
 
     async def periodically_check_match_ended(self):
         packet = GameTickPacket()  # noqa
@@ -146,7 +149,7 @@ class ContinousGames():
 
         self.start_match(bots, game_map)
         await asyncio.create_task(self.periodic_check_started())
-        await asyncio.create_task(self.periodic_check_no_touch())
+        # await asyncio.create_task(self.periodic_check_no_touch())
         await asyncio.sleep(280)
 
         await asyncio.create_task(self.periodically_check_match_ended())

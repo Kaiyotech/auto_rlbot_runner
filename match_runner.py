@@ -62,14 +62,17 @@ def get_random_standard_map() -> str:
 sm: Optional[SetupManager] = None
 
 
-def get_fresh_setup_manager():
+def get_fresh_setup_manager(_match_config: MatchConfig):
     global sm
-    if sm is not None:
+    # try to keep same
+    if sm is not None: # and sm.match_config != match_config:
         try:
             sm.shut_down()
         except Exception as e:
             print(e)
+    # elif sm is None:
     sm = SetupManager()
+
     return sm
 
 
@@ -80,16 +83,17 @@ def run_match(bot_configs: List[PlayerConfig], _script_configs: List[ScriptConfi
         match_config.game_map = get_random_standard_map()
     else:
         match_config.game_map = game_map
-    match_config.enable_state_setting = True
+    match_config.enable_state_setting = False
 
     match_config.player_configs = bot_configs
     match_config.mutators = MutatorConfig()
     # match_config.mutators.
     match_config.auto_save_replay = False
-    match_config.instant_start = False
+    match_config.instant_start = True
     match_config.skip_replays = True
 
-    sm = get_fresh_setup_manager()
+    # if sm is None:
+    sm = get_fresh_setup_manager(match_config)
     sm.early_start_seconds = 5
     sm.connect_to_game()
     sm.load_match_config(match_config)

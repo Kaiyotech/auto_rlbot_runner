@@ -121,7 +121,7 @@ class ContinousGames():
         num_cars_fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_mode.txt", "r+")
         try:
             mode = num_cars_fh.read()
-            mode = mode.split("!changemode")[1].strip()
+            mode = mode.split("!setmode")[1].strip()
             mode = int(mode) * 2
             if mode not in self.allowed_modes:
                 mode = None
@@ -146,7 +146,7 @@ class ContinousGames():
         fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_map.txt", "r+")
         game_map = fh.read()
         try:
-            game_map = game_map.split("!newmap")[1].strip()
+            game_map = game_map.split("!setmap")[1].strip()
         except:
             game_map = None
         if game_map not in match_runner.STANDARD_MAPS:
@@ -189,10 +189,10 @@ def choose_player_1_macro():
 def get_opponent():
 
     oppo_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis\\stream_files\\opponent.txt"
+    bot_bundle = list(
+                scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis"))
     try:
         with open(oppo_file, 'r+') as fh:
-            bot_bundle = list(
-                scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis"))
             line = fh.readline()
             if line.startswith("used"):
                 return bot_bundle
@@ -211,7 +211,7 @@ def get_opponent():
 
     except Exception as e:
         print(f"Error reading opponent file: {e}")
-        return
+        return bot_bundle
 
 
 if __name__ == '__main__':

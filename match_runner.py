@@ -51,8 +51,30 @@ STANDARD_MAPS = [
     "NeoTokyo_Comic",
     "UtopiaColiseum_Gilded",
     "SovereignHeights",
-    "Farmstead_Spooky"
+    "Farmstead_Spooky",
+    "outlaw_oasis_p",
+    "ff_dusk_p",
+    "fni_stadium_p",
+    "swoosh_p",
+    "farm_grs_p",
+    "farm_hw_p",
+    "neotokyo_hax_p",
+    "wasteland_grs_p",
+    "eurostadium_dusk_p",
 ]
+
+NEW_STANDARD_MAPS = {
+    "championsfield_nikefc": "swoosh_p",
+    "forbiddentemple_fireandice": "fni_stadium_p",
+    "deadeyecanyon_oasis": "outlaw_oasis_p",
+    "estadiovida_dusk": "ff_dusk_p",
+    "mannfield_dusk": "eurostadium_dusk_p",
+    "farmstead_pitched": "farm_grs_p",
+    "farmstead_upsidedown": "farm_hw_p",
+    "wasteland_pitched": "wasteland_grs_p",
+    "neotokyo_hacked": "neotokyo_hax_p",
+}
+
 
 
 def get_random_standard_map() -> str:

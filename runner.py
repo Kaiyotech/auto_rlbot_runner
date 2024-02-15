@@ -58,7 +58,7 @@ class ContinousGames():
                     await asyncio.sleep(2.0)
                     # print(packet.game_info)
                     started = True
-                    # hide_hud_choose_1_macro()  # not working anyway currently
+                    hide_hud_choose_1_macro()
                     # choose_player_1_macro()
             except Exception as ex:
                 print(ex)
@@ -118,21 +118,9 @@ class ContinousGames():
 
     async def start_round(self):
         print("trying to start round")
-        num_cars_fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_mode.txt", "r+")
-        try:
-            mode = num_cars_fh.read()
-            mode = mode.split("!setmode")[1].strip()
-            mode = int(mode) * 2
-            if mode not in self.allowed_modes:
-                mode = None
-        except:
-            mode = None
-            pass
-        num_cars_fh.write("used")
-        num_cars_fh.close()
+        mode = get_num_cars(self.allowed_modes)
         num_players = random.choice(self.allowed_modes) if mode is None else mode
-        bot_bundles_blue = list(
-            scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis"))
+        bot_bundles_blue = get_opponent(True)
         bot_bundles_orange = get_opponent()
         bots = []
         mid = num_players // 2
@@ -142,16 +130,7 @@ class ContinousGames():
                 bots.append(self.make_bot_config(bot_bundles_blue[0], 0, team_num))
             else:
                 bots.append(self.make_bot_config(bot_bundles_orange[0], 0, team_num))
-        # bots = [self.make_bot_config(bundle) for bundle in bot_bundles]
-        fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_map.txt", "r+")
-        game_map = fh.read()
-        try:
-            game_map = game_map.split("!setmap")[1].strip()
-        except:
-            game_map = None
-        if game_map not in match_runner.STANDARD_MAPS:
-            game_map = None
-        fh.close()
+        game_map = get_map()
 
         self.start_match(bots, game_map)
         await asyncio.create_task(self.periodic_check_started())
@@ -160,18 +139,55 @@ class ContinousGames():
 
         await asyncio.create_task(self.periodically_check_match_ended())
 
+def get_map():
+    fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_map.txt", "r")
+    game_map = fh.read()
+    try:
+        game_map = game_map.split("!setmap")[1].strip()
+    except:
+        game_map = None
+    # first check the new ones
+    for (k, v) in match_runner.NEW_STANDARD_MAPS.items():
+        if game_map.lower() == k.lower():
+            game_map = v
+    if game_map.lower() not in [standard_map.lower() for standard_map in match_runner.STANDARD_MAPS]:
+        game_map = None
+    else:
+        for standard_map in match_runner.STANDARD_MAPS:
+            if standard_map.lower() == game_map.lower():
+                game_map = standard_map
+                break
+    fh.close()
+    return game_map
+
+
+def get_num_cars(allowed_modes):
+    num_cars_fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_mode.txt", "r")
+    try:
+        mode = num_cars_fh.read()
+        mode = mode.split("!setmode")[1].strip()
+        if mode.lower() == 'random':
+            return None
+        mode = int(mode) * 2
+        if mode not in allowed_modes:
+            mode = None
+    except:
+        return None
+    return mode
+
 
 # from EastVillage
 def hide_hud_macro():
     print("hiding hud")
-    app = Application()
+    app = Application(backend='uia')
     app.connect(title_re='Rocket League.*')
     win = app.window(title_re='Rocket League.*')
     win.type_keys("{h down}" "{h up}")
 
+
 def hide_hud_choose_1_macro():
     print("hiding hud and choosing player 1")
-    app = Application()
+    app = Application(backend='uia')
     app.connect(title_re='Rocket League.*')
     win = app.window(title_re='Rocket League.*')
     win.type_keys("{h down}" "{h up}")
@@ -180,24 +196,27 @@ def hide_hud_choose_1_macro():
 
 def choose_player_1_macro():
     print("choose_player_1")
-    app = Application()
+    app = Application(backend='uia')
     app.connect(title_re='Rocket League.*')
     win = app.window(title_re='Rocket League.*')
     win.type_keys("{1 down}" "{1 up}")
 
 
-def get_opponent():
-
-    oppo_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis\\stream_files\\opponent.txt"
+def get_opponent(blue=False):
+    split_command = "!setoppo" if not blue else "!setoppoblue"
+    oppo_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis\\stream_files\\opponent.txt" if not blue\
+        else "C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis\\stream_files\\opponent_blue.txt"
     bot_bundle = list(
                 scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis"))
     try:
-        with open(oppo_file, 'r+') as fh:
+        with open(oppo_file, 'r') as fh:
             line = fh.readline()
-            if line.startswith("used"):
+            # if line.startswith("used"):
+            #     return bot_bundle
+            line = line.split(split_command)[1].strip()
+            if line.lower() == 'spectrum':
                 return bot_bundle
-            line = line.split("!setoppo")[1].strip()
-            if line.lower() == 'necto':
+            elif line.lower() == 'necto':
                 bot_bundle = list(scan_directory_for_bot_configs(
              "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Necto"))
             elif line.lower() == 'nexto':
@@ -205,8 +224,8 @@ def get_opponent():
                     "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Nexto"))
             elif line.lower() == "opti":
                 bot_bundle = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Opti_play_finals_rlbot2023"))
-            fh.seek(0, 0)
-            fh.write("used\n")
+            # fh.seek(0, 0)
+            # fh.write("used\n")
             return bot_bundle
 
     except Exception as e:

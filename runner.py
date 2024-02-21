@@ -1,5 +1,6 @@
 import asyncio
 import random
+import time
 from threading import Thread
 from typing import List, Optional
 
@@ -188,10 +189,18 @@ def hide_hud_macro():
 def hide_hud_choose_1_macro():
     print("hiding hud and choosing player 1")
     app = Application(backend='uia')
-    app.connect(title_re='Rocket League.*')
-    win = app.window(title_re='Rocket League.*')
-    win.type_keys("{h down}" "{h up}")
-    win.type_keys("{1 down}" "{1 up}")
+    try:
+        app.connect(title_re='Rocket League.*')
+        win = app.window(title_re='Rocket League.*')
+
+        # Ensure the window is focused
+        win.set_focus()
+        time.sleep(0.5)  # Allow time for focus
+
+        win.type_keys("{h down}" "{h up}")
+        win.type_keys("{1 down}" "{1 up}")
+    except Exception as e:
+        print(f"Error executing macro: {e}")
 
 
 def choose_player_1_macro():

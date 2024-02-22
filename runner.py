@@ -21,7 +21,7 @@ class ContinousGames():
     def __init__(self):
         self.active_thread: Optional[Thread] = None
         self.nick = 'ContinousGames'
-        self.allow_overtime = True
+        self.allow_overtime = False
         self.enforce_no_touch = True
         self.allowed_modes = [2, 4, 6]
 

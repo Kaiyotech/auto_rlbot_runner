@@ -47,7 +47,7 @@ class ContinousGames():
         self.active_thread = Thread(target=run_match, args=(bots, None, map), daemon=True)
         self.active_thread.start()
 
-    async def periodic_check_started(self):
+    async def periodic_check_started(self, num_players):
         packet = GameTickPacket()  # noqa
         started = False
         while not started:
@@ -59,8 +59,9 @@ class ContinousGames():
                     await asyncio.sleep(2.0)
                     # print(packet.game_info)
                     started = True
-                    hide_hud_choose_1_macro()
-                    # choose_player_1_macro()
+                    get_director_choice(num_players)
+                    # await asyncio.sleep(1.0)
+                    # hide_hud_macro()
             except Exception as ex:
                 print(ex)
                 
@@ -134,7 +135,7 @@ class ContinousGames():
         game_map = get_map()
 
         self.start_match(bots, game_map)
-        await asyncio.create_task(self.periodic_check_started())
+        await asyncio.create_task(self.periodic_check_started(num_players))
         # await asyncio.create_task(self.periodic_check_no_touch())
         await asyncio.sleep(280)
 
@@ -181,9 +182,17 @@ def get_num_cars(allowed_modes):
 def hide_hud_macro():
     print("hiding hud")
     app = Application(backend='uia')
-    app.connect(title_re='Rocket League.*')
-    win = app.window(title_re='Rocket League.*')
-    win.type_keys("{h down}" "{h up}")
+    try:
+        app.connect(title_re='Rocket League.*')
+        win = app.window(title_re='Rocket League.*')
+
+        # Ensure the window is focused
+        win.set_focus()
+        time.sleep(0.5)  # Allow time for focus
+
+        win.type_keys("{h down}" "{h up}")
+    except Exception as e:
+        print(f"Error executing macro: {e}")
 
 
 def hide_hud_choose_1_macro():
@@ -203,12 +212,20 @@ def hide_hud_choose_1_macro():
         print(f"Error executing macro: {e}")
 
 
-def choose_player_1_macro():
-    print("choose_player_1")
+def choose_player_x_macro(x):
+    print(f"choosing player {x}")
     app = Application(backend='uia')
-    app.connect(title_re='Rocket League.*')
-    win = app.window(title_re='Rocket League.*')
-    win.type_keys("{1 down}" "{1 up}")
+    try:
+        app.connect(title_re='Rocket League.*')
+        win = app.window(title_re='Rocket League.*')
+
+        # Ensure the window is focused
+        win.set_focus()
+        time.sleep(0.5)  # Allow time for focus
+        win.type_keys("{h down}" "{h up}")
+        win.type_keys(f"{{{x} down}}" f"{{{x} up}}")
+    except Exception as e:
+        print(f"Error executing macro: {e}")
 
 
 def get_opponent(blue=False):
@@ -240,6 +257,30 @@ def get_opponent(blue=False):
     except Exception as e:
         print(f"Error reading opponent file: {e}")
         return bot_bundle
+
+
+def get_director_choice(num_players):
+    # players are 123567 director is 9 auto is 0
+    my_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis\\stream_files\\set_director.txt"
+    per_team = num_players // 2
+    blue = list(range(1, per_team + 1))
+    orange = list(range(5, 5 + per_team))
+    valid_values = blue + orange + [9, 0]
+    try:
+        with open(my_file, 'r') as fh:
+            my_line = fh.readline()
+            my_line = my_line.split("!setdirector")[1].strip()
+            if my_line.lower() == 'true':
+                choose_player_x_macro(9)
+            elif my_line.lower() == 'auto':
+                choose_player_x_macro(0)
+            elif int(my_line) in valid_values:
+                choose_player_x_macro(int(my_line))
+            else:
+                choose_player_x_macro(9)
+    except Exception as e:
+        print(f"Error reading peak file: {e}")
+        return
 
 
 if __name__ == '__main__':

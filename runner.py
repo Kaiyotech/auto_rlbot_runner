@@ -1,4 +1,5 @@
 import asyncio
+import os
 import random
 import time
 from threading import Thread
@@ -9,6 +10,8 @@ from rlbot.parsing.bot_config_bundle import BotConfigBundle
 from rlbot.parsing.directory_scanner import scan_directory_for_bot_configs
 from rlbot.utils.game_state_util import Vector3
 from rlbot.utils.structures.game_data_struct import GameTickPacket
+from rlbot.utils.process_configuration import WrongProcessArgs
+
 # from twitchio.ext import commands
 # from twitchio import Context
 from pywinauto.application import Application
@@ -24,6 +27,7 @@ class ContinousGames():
         self.allow_overtime = True
         self.enforce_no_touch = True
         self.allowed_modes = [2, 4, 6]
+        save_pid()
 
     async def event_ready(self):
         print(f'Ready | {self.nick}')
@@ -50,20 +54,30 @@ class ContinousGames():
     async def periodic_check_started(self, num_players):
         packet = GameTickPacket()  # noqa
         started = False
-        while not started:
+        timeout = 30  # game start timeout
+        while not started and timeout > 0:
             await asyncio.sleep(1.0)
             try:
-                match_runner.sm.game_interface.update_live_data_packet(packet)
-                if packet.game_info.is_round_active and packet.game_info.game_time_remaining > 60 and \
-                        packet.game_info.is_kickoff_pause:
-                    await asyncio.sleep(2.0)
-                    # print(packet.game_info)
-                    started = True
-                    get_director_choice(num_players)
-                    # await asyncio.sleep(1.0)
-                    # hide_hud_macro()
+                if match_runner.sm is not None and match_runner.sm.game_interface is not None:
+                    match_runner.sm.game_interface.update_live_data_packet(packet)
+                    if packet.game_info.is_round_active and packet.game_info.game_time_remaining > 60 and \
+                            packet.game_info.is_kickoff_pause:
+                        await asyncio.sleep(2.0)
+                        # print(packet.game_info)
+                        started = True
+                        get_director_choice(num_players)
+                        # await asyncio.sleep(1.0)
+                        # hide_hud_macro()
+                else:
+                    print("Waiting for Rocket League to finish starting ...")
+                timeout -= 1
+            except WrongProcessArgs as e:
+                print(f"Error: {e}. Restarting Rocket League...")
+                kill_rocket_league()  # You'll need to implement this function
+                await self.start_round()  # Restart the process
             except Exception as ex:
                 print(ex)
+
                 
     # async def period_checks(self):
         
@@ -119,27 +133,39 @@ class ContinousGames():
                 print(ex)
 
     async def start_round(self):
-        print("trying to start round")
-        mode = get_num_cars(self.allowed_modes)
-        num_players = random.choice(self.allowed_modes) if mode is None else mode
-        bot_bundles_blue = get_opponent(True)
-        bot_bundles_orange = get_opponent()
-        bots = []
-        mid = num_players // 2
-        for i in range(num_players):
-            team_num = 0 if i < mid else 1
-            if team_num == 0:
-                bots.append(self.make_bot_config(bot_bundles_blue[0], 0, team_num))
-            else:
-                bots.append(self.make_bot_config(bot_bundles_orange[0], 0, team_num))
-        game_map = get_map()
+        try:
+            print("trying to start round")
+            mode = get_num_cars(self.allowed_modes)
+            num_players = random.choice(self.allowed_modes) if mode is None else mode
+            bot_bundles_blue = get_opponent(True)
+            bot_bundles_orange = get_opponent()
+            bots = []
+            mid = num_players // 2
+            for i in range(num_players):
+                team_num = 0 if i < mid else 1
+                if team_num == 0:
+                    bots.append(self.make_bot_config(bot_bundles_blue[0], 0, team_num))
+                else:
+                    bots.append(self.make_bot_config(bot_bundles_orange[0], 0, team_num))
+            game_map = get_map()
 
-        self.start_match(bots, game_map)
-        await asyncio.create_task(self.periodic_check_started(num_players))
-        # await asyncio.create_task(self.periodic_check_no_touch())
-        await asyncio.sleep(280)
+            self.start_match(bots, game_map)
+            await asyncio.create_task(self.periodic_check_started(num_players))
+            # await asyncio.create_task(self.periodic_check_no_touch())
+            await asyncio.sleep(280)
 
-        await asyncio.create_task(self.periodically_check_match_ended())
+            await asyncio.create_task(self.periodically_check_match_ended())
+        except WrongProcessArgs as e:
+            print(f"Error: {e}. Restarting Rocket League...")
+            kill_rocket_league()  # You'll need to implement this function
+            await self.start_round()  # Restart the process
+
+
+
+def kill_rocket_league():
+    print("Attempting to kill Rocket League")
+    os.system('taskkill /f /im RocketLeague.exe')
+    time.sleep(30)
 
 def get_map():
     fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_map.txt", "r")
@@ -282,6 +308,11 @@ def get_director_choice(num_players):
         print(f"Error reading peak file: {e}")
         return
 
+
+def save_pid():
+    pid = os.getpid()
+    with open("runner_pid.txt", "w") as f:
+        f.write(str(pid))
 
 if __name__ == '__main__':
     bot = ContinousGames()

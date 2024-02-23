@@ -2,11 +2,12 @@ import asyncio
 import os
 import random
 import time
+from pathlib import Path
 from threading import Thread
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from rlbot.matchconfig.match_config import PlayerConfig
-from rlbot.parsing.bot_config_bundle import BotConfigBundle
+from rlbot.parsing.bot_config_bundle import BotConfigBundle, get_bot_config_bundle
 from rlbot.parsing.directory_scanner import scan_directory_for_bot_configs
 from rlbot.utils.game_state_util import Vector3
 from rlbot.utils.structures.game_data_struct import GameTickPacket
@@ -19,6 +20,33 @@ from pywinauto.application import Application
 from match_runner import run_match
 import match_runner
 
+BotID = str
+
+# def load_all_bots(ld: LeagueDir) -> Mapping[BotID, BotConfigBundle]:
+#     bots = {
+#         fmt_bot_name(bot_config.name): bot_config
+#         for bot_config in scan_directory_for_bot_configs(ld.bots)
+#     }
+#
+#     # Psyonix bots
+#     psyonix_allstar = get_bot_config_bundle(PackageFiles.psyonix_allstar)
+#     psyonix_pro = get_bot_config_bundle(PackageFiles.psyonix_pro)
+#     psyonix_rookie = get_bot_config_bundle(PackageFiles.psyonix_rookie)
+#
+#     psyonix_allstar_name = fmt_bot_name(psyonix_allstar.name)
+#     psyonix_pro_name = fmt_bot_name(psyonix_pro.name)
+#     psyonix_rookie_name = fmt_bot_name(psyonix_rookie.name)
+#
+#     bots[psyonix_allstar_name] = psyonix_allstar
+#     bots[psyonix_pro_name] = psyonix_pro
+#     bots[psyonix_rookie_name] = psyonix_rookie
+#
+#     # Psyonix bots have skill values
+#     psyonix_bot_skill[psyonix_allstar_name] = 1.0
+#     psyonix_bot_skill[psyonix_pro_name] = 0.5
+#     psyonix_bot_skill[psyonix_rookie_name] = 0.0
+#
+#     return bots
 
 class ContinousGames():
     def __init__(self):
@@ -34,16 +62,36 @@ class ContinousGames():
         await self.start_round()
 
     def make_bot_config(self, bundle: BotConfigBundle, car_index, team_num) -> PlayerConfig:
-        bundle.supports_early_start = True
-        bot = PlayerConfig()
-        bot.config_path = bundle.config_path
-        bot.bot = True
-        bot.rlbot_controlled = True
-        bot.loadout_config = bundle.generate_loadout_config(car_index, team_num)
-        bot.name = bundle.name
-        bot.team = team_num
 
-        return bot
+        if bundle == "allstar" or "rookie":
+            _package_dir = Path(__file__).absolute().parent
+            _resource_dir = _package_dir / "resources"
+
+            if bundle == "allstar":
+                psyonix_bot = _resource_dir / "psyonix_allstar.cfg"
+            else:
+                psyonix_bot = _resource_dir / "psyonix_rookie.cfg"
+            bot_bundle = get_bot_config_bundle(psyonix_bot)
+            bot = PlayerConfig()
+            bot.config_path = bot_bundle.config_path
+            bot.bot = True
+            bot.rlbot_controlled = False
+            bot.loadout_config = bot_bundle.generate_loadout_config(car_index, team_num)
+            psyonix_bot_skill = 1.0 if bundle == "allstar" else 0.0
+            bot.bot_skill = psyonix_bot_skill
+            bot.team = team_num
+            bot.name = bot_bundle.name
+            return bot
+        else:
+            bot = PlayerConfig()
+            bot.config_path = bundle.config_path
+            bot.bot = True
+            bot.rlbot_controlled = True
+            bot.loadout_config = bundle.generate_loadout_config(car_index, team_num)
+            bot.name = bundle.name
+            bot.team = team_num
+            return bot
+
 
     def start_match(self, bots: List[PlayerConfig], map):
         if self.active_thread and self.active_thread.is_alive():
@@ -276,6 +324,29 @@ def get_opponent(blue=False):
                     "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Nexto"))
             elif line.lower() == "opti":
                 bot_bundle = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Opti_play_finals_rlbot2023"))
+            elif line.lower() == "sdc":
+                bot_bundle = list(scan_directory_for_bot_configs(
+                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Self - drivingcar"))
+            elif line.lower() == "tensor":
+                bot_bundle = list(scan_directory_for_bot_configs(
+                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\tensorbot"))
+            elif line.lower() == "immortal":
+                bot_bundle = list(scan_directory_for_bot_configs(
+                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\immortal"))
+            elif line.lower() == "element":
+                bot_bundle = list(scan_directory_for_bot_configs(
+                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\element"))
+            elif line.lower() == "allstar" or line.lower() == "all-star" or line.lower() == "all star":
+                bot_bundle = ["allstar"]
+            elif line.lower() == "rookie":
+                bot_bundle = ["rookie"]
+            elif line.lower() == "bumblebee":
+                bot_bundle = list(scan_directory_for_bot_configs(
+                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Botimus&Bumblebee"))
+            elif line.lower() == "kamael":
+                bot_bundle = list(scan_directory_for_bot_configs(
+                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Kamael_family"))
+
             # fh.seek(0, 0)
             # fh.write("used\n")
             return bot_bundle

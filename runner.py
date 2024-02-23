@@ -63,7 +63,7 @@ class ContinousGames():
 
     def make_bot_config(self, bundle: BotConfigBundle, car_index, team_num) -> PlayerConfig:
 
-        if bundle == "allstar" or "rookie":
+        if bundle == "allstar" or bundle == "rookie":
             _package_dir = Path(__file__).absolute().parent
             _resource_dir = _package_dir / "resources"
 

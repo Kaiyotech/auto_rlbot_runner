@@ -1,4 +1,6 @@
 import random
+import time
+
 from dataclasses import dataclass
 from typing import Dict, Optional, List, AnyStr
 
@@ -99,28 +101,46 @@ def get_fresh_setup_manager(_match_config: MatchConfig):
 
 
 def run_match(bot_configs: List[PlayerConfig], _script_configs: List[ScriptConfig], game_map: AnyStr):
-    match_config = MatchConfig()
-    match_config.game_mode = 'Soccer'
-    if game_map is None:
-        match_config.game_map = get_random_standard_map()
-    else:
-        match_config.game_map = game_map
-    match_config.enable_state_setting = False
+    MAX_RETRIES = 10  # You can adjust the maximum number of attempts
+    retry_count = 0
 
-    match_config.player_configs = bot_configs
-    match_config.mutators = MutatorConfig()
-    # match_config.mutators.
-    match_config.auto_save_replay = False
-    match_config.instant_start = True
-    match_config.skip_replays = True
+    while retry_count < MAX_RETRIES:
+        try:
+            match_config = MatchConfig()
+            match_config.game_mode = 'Soccer'
+            if game_map is None:
+                match_config.game_map = get_random_standard_map()
+            else:
+                match_config.game_map = game_map
+            match_config.enable_state_setting = False
 
-    # if sm is None:
-    sm = get_fresh_setup_manager(match_config)
-    sm.early_start_seconds = 5
-    sm.connect_to_game()
-    sm.load_match_config(match_config)
-    sm.launch_early_start_bot_processes()
-    sm.start_match()
-    sm.launch_bot_processes()
-    sm.infinite_loop()
+            match_config.player_configs = bot_configs
+            match_config.mutators = MutatorConfig()
+            # match_config.mutators.
+            match_config.auto_save_replay = False
+            match_config.instant_start = True
+            match_config.skip_replays = True
+
+            # if sm is None:
+            sm = get_fresh_setup_manager(match_config)
+            sm.early_start_seconds = 5
+            sm.connect_to_game()
+            sm.load_match_config(match_config)
+            sm.launch_early_start_bot_processes()
+            sm.start_match()
+            sm.launch_bot_processes()
+            sm.infinite_loop()
+            break
+
+        except TimeoutError as e:
+            retry_count += 1
+            if retry_count < MAX_RETRIES:
+                print(f"TimeoutError occurred. Retrying (attempt {retry_count} of {MAX_RETRIES})...")
+                time.sleep(10)  # Add a brief delay before retrying
+            else:
+                print(f"Maximum retries reached. Error: {e}")
+                # Consider more sophisticated error handling if retries fail
+
+
+
 

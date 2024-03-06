@@ -75,8 +75,8 @@ NEW_STANDARD_MAPS = {
     "farmstead_upsidedown": "farm_hw_p",
     "wasteland_pitched": "wasteland_grs_p",
     "neotokyo_hacked": "neotokyo_hax_p",
+    "aquadome_salty": "Underwater_GRS_P",
 }
-
 
 
 def get_random_standard_map() -> str:

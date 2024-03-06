@@ -300,7 +300,7 @@ def get_opponent(blue=False):
                 bot_bundle = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Opti_play_finals_rlbot2023"))
             elif line.lower() == "sdc":
                 bot_bundle = list(scan_directory_for_bot_configs(
-                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Self - drivingcar"))
+                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Self-drivingcar"))
             elif line.lower() == "tensor":
                 bot_bundle = list(scan_directory_for_bot_configs(
                     "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\tensorbot"))

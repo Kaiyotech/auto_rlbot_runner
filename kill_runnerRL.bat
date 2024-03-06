@@ -1,7 +1,7 @@
 @echo off
 
 REM Attempt to kill by window title first
-taskkill /f /fi "WINDOWTITLE eq RLBOT RUNNER" >nul 2>&1
+taskkill /f /t /fi "WINDOWTITLE eq RLBOT RUNNER" >nul 2>&1
 
 REM Check for successful termination based on errorlevel
 if errorlevel 1 (

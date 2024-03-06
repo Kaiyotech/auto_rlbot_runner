@@ -63,6 +63,7 @@ STANDARD_MAPS = [
     "neotokyo_hax_p",
     "wasteland_grs_p",
     "eurostadium_dusk_p",
+    "underwater_grs_p",
 ]
 
 NEW_STANDARD_MAPS = {
@@ -75,7 +76,7 @@ NEW_STANDARD_MAPS = {
     "farmstead_upsidedown": "farm_hw_p",
     "wasteland_pitched": "wasteland_grs_p",
     "neotokyo_hacked": "neotokyo_hax_p",
-    "aquadome_salty": "Underwater_GRS_P",
+    "aquadome_salty": "underwater_grs_p",
 }
 
 

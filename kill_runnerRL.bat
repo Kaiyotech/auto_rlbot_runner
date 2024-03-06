@@ -1,22 +1,18 @@
 @echo off
 
 REM Attempt to kill by window title first
-taskkill /f /t /fi "WINDOWTITLE eq RLBOT RUNNER" >nul 2>&1
+taskkill /f /t /fi "WINDOWTITLE eq RLBOT RUNNER"
+taskkill /f /t /fi "WINDOWTITLE eq RLBOT RUNNER"
 
-REM Check for successful termination based on errorlevel
-if errorlevel 1 (
-    echo "Process with 'RLBOT RUNNER' window title not found. Attempting PID fallback..."
-   REM Process with the window title not found or termination failed. Fall back to PID.
-   for /f %%i in (runner_pid.txt) do set RUNNER_PID=%%i
-
-   if not defined RUNNER_PID (
-       echo "Runner PID not found! Restart may not work correctly."
-   ) else (
-       taskkill /F /PID %RUNNER_PID%
-   )
-) else (
-    echo "Process with 'RLBOT RUNNER' window title terminated."
+REM Find and kill Python processes running runner.py
+for /f "tokens=2 delims= " %%a in ('wmic process where "name='python.exe' and CommandLine like '%%runner.py%%'" get ProcessId /value') do (
+    for /f "tokens=2 delims= " %%b in ('wmic process where "ProcessId=%%a" get ParentProcessId /value') do (
+        taskkill /f /t /PID %%b >nul 2>&1
+    )
+    taskkill /f /t /PID %%a >nul 2>&1
 )
+
+echo "Attempted to kill RUNNER by name and related Python processes"
 
 REM Rest of your logic
 taskkill /f /im RocketLeague.exe 

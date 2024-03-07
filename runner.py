@@ -157,6 +157,16 @@ class ContinousGames():
     async def start_round(self):
         try:
             print("trying to start round")
+            # empty the slider files in case it's not Spectrum playing
+            my_filenames = ['sliders.txt', 'sliders_orange.txt']
+            stream_dir = "C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\"
+            for filename in my_filenames:
+                try:
+                    filename = os.path.join(stream_dir, filename)
+                    with open(filename, 'w') as f2:
+                        f2.write("")
+                except Exception as e:
+                    print(f"Error writing to file: {e}")
             mode = get_num_cars(self.allowed_modes)
             num_players = random.choice(self.allowed_modes) if mode is None else mode
             bot_bundles_blue = get_opponent(True)

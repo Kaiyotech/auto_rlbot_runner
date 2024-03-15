@@ -26,7 +26,7 @@ class ContinousGames():
     def __init__(self):
         self.active_thread: Optional[Thread] = None
         self.nick = 'ContinousGames'
-        self.allow_overtime = True
+        self.allow_overtime = get_ot_setting()
         self.enforce_no_touch = True
         self.allowed_modes = [2, 4, 6]
         save_pid()
@@ -138,6 +138,7 @@ class ContinousGames():
             previous_check_time = 1000
             no_touch_ball = False
             # stuck_car = False
+            self.allow_overtime = get_ot_setting()
             try:
                 match_runner.sm.game_interface.update_live_data_packet(packet)
                 if packet.game_ball.physics.location == previous_ball_pos and previous_ball_pos.x != 0 and \
@@ -361,6 +362,22 @@ def get_director_choice(num_players):
                 choose_player_x_macro(9)
     except Exception as e:
         print(f"Error reading peak file: {e}")
+        return
+
+
+def get_ot_setting():
+    my_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis\\stream_files\\set_ot.txt"
+
+    try:
+        with open(my_file, 'r') as fh:
+            my_line = fh.readline()
+            my_line = my_line.split("!setallowot")[1].strip()
+            if my_line.lower() == 'true':
+                return True
+            else:
+                return False
+    except Exception as e:
+        print(f"Error reading OT file: {e}")
         return
 
 

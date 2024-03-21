@@ -160,7 +160,7 @@ class ContinousGames():
             print("trying to start round")
             # empty the slider files in case it's not Spectrum playing
             my_filenames = ['sliders.txt', 'sliders_orange.txt']
-            stream_dir = "C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\"
+            stream_dir = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\"
             for filename in my_filenames:
                 try:
                     filename = os.path.join(stream_dir, filename)
@@ -201,7 +201,7 @@ def kill_rocket_league():
     time.sleep(30)
 
 def get_map():
-    fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_map.txt", "r")
+    fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\new_map.txt", "r")
     game_map = fh.read()
     try:
         game_map = game_map.split("!setmap")[1].strip()
@@ -223,7 +223,7 @@ def get_map():
 
 
 def get_num_cars(allowed_modes):
-    num_cars_fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\spectrum_play_redis\\stream_files\\new_mode.txt", "r")
+    num_cars_fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\new_mode.txt", "r")
     try:
         mode = num_cars_fh.read()
         mode = mode.split("!setmode")[1].strip()
@@ -289,8 +289,8 @@ def choose_player_x_macro(x):
 
 def get_opponent(blue=False):
     split_command = "!setoppo" if not blue else "!setoppoblue"
-    oppo_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis\\stream_files\\opponent.txt" if not blue\
-        else "C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis\\stream_files\\opponent_blue.txt"
+    oppo_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent.txt" if not blue\
+        else "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent_blue.txt"
     bot_bundle = list(
                 scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis"))
     try:
@@ -343,7 +343,7 @@ def get_opponent(blue=False):
 
 def get_director_choice(num_players):
     # players are 123567 director is 9 auto is 0
-    my_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis\\stream_files\\set_director.txt"
+    my_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\set_director.txt"
     per_team = num_players // 2
     blue = list(range(1, per_team + 1))
     orange = list(range(5, 5 + per_team))
@@ -366,7 +366,7 @@ def get_director_choice(num_players):
 
 
 def get_ot_setting():
-    my_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis\\stream_files\\set_ot.txt"
+    my_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\set_ot.txt"
 
     try:
         with open(my_file, 'r') as fh:

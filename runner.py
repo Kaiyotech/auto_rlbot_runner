@@ -292,14 +292,14 @@ def get_opponent(blue=False):
     oppo_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis\\stream_files\\opponent.txt" if not blue\
         else "C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis\\stream_files\\opponent_blue.txt"
     bot_bundle = list(
-                scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Spectrum_play_redis"))
+                scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis"))
     try:
         with open(oppo_file, 'r') as fh:
             line = fh.readline()
             # if line.startswith("used"):
             #     return bot_bundle
             line = line.split(split_command)[1].strip()
-            if line.lower() == 'spectrum':
+            if line.lower() == 'opti':
                 return bot_bundle
             elif line.lower() == 'necto':
                 bot_bundle = list(scan_directory_for_bot_configs(
@@ -307,7 +307,7 @@ def get_opponent(blue=False):
             elif line.lower() == 'nexto':
                 bot_bundle = list(scan_directory_for_bot_configs(
                     "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Nexto"))
-            elif line.lower() == "opti":
+            elif line.lower() == "optiv1":
                 bot_bundle = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Opti_play_finals_rlbot2023"))
             elif line.lower() == "sdc":
                 bot_bundle = list(scan_directory_for_bot_configs(

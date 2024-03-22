@@ -158,8 +158,8 @@ class ContinousGames():
     async def start_round(self):
         try:
             print("trying to start round")
-            # empty the slider files in case it's not Spectrum playing
-            my_filenames = ['sliders.txt', 'sliders_orange.txt']
+            # empty the slider files in case it's not Opti playing
+            my_filenames = ['peak_blue.txt', 'peak_orange.txt']
             stream_dir = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\"
             for filename in my_filenames:
                 try:

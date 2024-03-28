@@ -328,9 +328,9 @@ def get_opponent(blue=False):
             elif line.lower() == "bumblebee":
                 bot_bundle = list(scan_directory_for_bot_configs(
                     "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Botimus&Bumblebee"))
-            elif line.lower() == "kamael":
-                bot_bundle = list(scan_directory_for_bot_configs(
-                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Kamael_family"))
+            # elif line.lower() == "kamael":
+            #     bot_bundle = list(scan_directory_for_bot_configs(
+            #         "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Kamael_family"))
 
             # fh.seek(0, 0)
             # fh.write("used\n")

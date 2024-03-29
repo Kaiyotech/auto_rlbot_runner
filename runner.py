@@ -139,6 +139,7 @@ class ContinousGames():
             no_touch_ball = False
             # stuck_car = False
             self.allow_overtime = get_ot_setting()
+            skip_match = get_skip_match()
             try:
                 match_runner.sm.game_interface.update_live_data_packet(packet)
                 if packet.game_ball.physics.location == previous_ball_pos and previous_ball_pos.x != 0 and \
@@ -146,7 +147,7 @@ class ContinousGames():
                         self.enforce_no_touch:
                     no_touch_ball = True
                 if packet.game_info.is_match_ended or (packet.game_info.is_overtime and not self.allow_overtime) or \
-                        no_touch_ball:
+                        no_touch_ball or skip_match:
                     print("Match ended. Starting new round...")
                     await self.start_round()
                     print("New round started")
@@ -185,7 +186,7 @@ class ContinousGames():
             self.start_match(bots, game_map)
             await asyncio.create_task(self.periodic_check_started(num_players))
             # await asyncio.create_task(self.periodic_check_no_touch())
-            await asyncio.sleep(280)
+            await asyncio.sleep(10)
 
             await asyncio.create_task(self.periodically_check_match_ended())
         except WrongProcessArgs as e:
@@ -299,6 +300,17 @@ def get_opponent(blue=False):
             # if line.startswith("used"):
             #     return bot_bundle
             line = line.split(split_command)[1].strip()
+            if line.lower() == 'level1':
+                line = random.choice(['rookie', 'allstar'])
+            elif line.lower() == 'level2':
+                line = random.choice(['tensor', 'allstar'])
+            elif line.lower() == 'level3':
+                line = random.choice(['bumblebee', 'sdc'])
+            elif line.lower() == 'level4':
+                line = random.choice(['necto', 'element'])
+            elif line.lower() == 'level5':
+                line = random.choice(['nexto', 'optiv1'])
+
             if line.lower() == 'opti':
                 return bot_bundle
             elif line.lower() == 'necto':
@@ -381,10 +393,28 @@ def get_ot_setting():
         return
 
 
+def get_skip_match():
+    my_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\set_skip.txt"
+
+    try:
+        with open(my_file, 'r+') as fh:
+            my_line = fh.readline()
+            if my_line == '!skipmatch':
+                print("Skipping match")
+                fh.truncate(0)  # empty the file so it's not reused
+                return True
+            else:
+                return False
+    except Exception as e:
+        print(f"Error reading skip match file: {e}")
+        return
+
+
 def save_pid():
     pid = os.getpid()
     with open("runner_pid.txt", "w") as f:
         f.write(str(pid))
+
 
 if __name__ == '__main__':
     bot = ContinousGames()

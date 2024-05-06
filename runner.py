@@ -31,6 +31,7 @@ class ContinousGames():
         self.allowed_modes = [2, 4, 6]
         self.blue = ''
         self.orange = ''
+        self.num_players = ''
         self.last_ten = []
         save_pid()
 
@@ -155,7 +156,7 @@ class ContinousGames():
                     print("Match ended. Starting new round...")
                     # get score and info
                     if not skip_match:
-                        game_string = f"{self.blue} vs {self.orange}: {packet.teams[0].score} - {packet.teams[1].score}"
+                        game_string = f"{self.num_players}s: {self.blue} VS {self.orange} {packet.teams[0].score} - {packet.teams[1].score} // "
                         self.last_ten.insert(0, game_string)
                         if len(self.last_ten) > 10:
                             self.last_ten.pop()
@@ -188,6 +189,7 @@ class ContinousGames():
             bot_bundles_orange = get_opponent()
             self.blue = bot_bundles_blue[0].name
             self.orange = bot_bundles_orange[0].name
+            self.num_players = num_players
             bots = []
             mid = num_players // 2
             for i in range(num_players):

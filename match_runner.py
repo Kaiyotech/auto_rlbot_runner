@@ -119,7 +119,7 @@ def run_match(bot_configs: List[PlayerConfig], _script_configs: List[ScriptConfi
             match_config.mutators = MutatorConfig()
             # match_config.mutators.
             match_config.auto_save_replay = False
-            match_config.instant_start = True
+            match_config.instant_start = False
             match_config.skip_replays = True
 
             # if sm is None:

@@ -29,6 +29,9 @@ class ContinousGames():
         self.allow_overtime = get_ot_setting()
         self.enforce_no_touch = True
         self.allowed_modes = [2, 4, 6]
+        self.blue = ''
+        self.orange = ''
+        self.last_ten = []
         save_pid()
 
     async def event_ready(self):
@@ -142,6 +145,7 @@ class ContinousGames():
             skip_match = get_skip_match()
             try:
                 match_runner.sm.game_interface.update_live_data_packet(packet)
+
                 if packet.game_ball.physics.location == previous_ball_pos and previous_ball_pos.x != 0 and \
                         previous_ball_pos.y != 0 and packet.game_info.seconds_elapsed - previous_check_time > 30 and \
                         self.enforce_no_touch:
@@ -149,6 +153,15 @@ class ContinousGames():
                 if packet.game_info.is_match_ended or (packet.game_info.is_overtime and not self.allow_overtime) or \
                         no_touch_ball or skip_match:
                     print("Match ended. Starting new round...")
+                    # get score and info
+                    if not skip_match:
+                        game_string = f"{self.blue} vs {self.orange}: {packet.teams[0].score} - {packet.teams[1].score}"
+                        self.last_ten.insert(0, game_string)
+                        if len(self.last_ten) > 10:
+                            self.last_ten.pop()
+                        score_file = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\last_scores.txt", "w")
+                        score_file.write("\n".join(self.last_ten))
+                        score_file.close()
                     await self.start_round()
                     print("New round started")
                     break
@@ -173,6 +186,8 @@ class ContinousGames():
             num_players = random.choice(self.allowed_modes) if mode is None else mode
             bot_bundles_blue = get_opponent(True)
             bot_bundles_orange = get_opponent()
+            self.blue = bot_bundles_blue[0].name
+            self.orange = bot_bundles_orange[0].name
             bots = []
             mid = num_players // 2
             for i in range(num_players):

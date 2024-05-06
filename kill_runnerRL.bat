@@ -16,5 +16,5 @@ echo "Attempted to kill RUNNER by name and related Python processes"
 
 REM Rest of your logic
 taskkill /f /im RocketLeague.exe 
-timeout /t 15 > nul
+timeout /t 30 > nul
 start "RLBOT RUNNER" cmd /k "call .\venv\Scripts\activate.bat & python runner.py"

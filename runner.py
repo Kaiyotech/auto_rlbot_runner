@@ -33,6 +33,9 @@ class ContinousGames():
         self.orange = ''
         self.num_players = ''
         self.last_ten = []
+        score_file = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\last_scores.txt", "r")
+        for line in score_file:
+            self.last_ten.append(line.strip())
         save_pid()
 
     async def event_ready(self):
@@ -189,7 +192,7 @@ class ContinousGames():
             bot_bundles_orange = get_opponent()
             self.blue = bot_bundles_blue[0].name
             self.orange = bot_bundles_orange[0].name
-            self.num_players = num_players
+            self.num_players = num_players // 2
             bots = []
             mid = num_players // 2
             for i in range(num_players):

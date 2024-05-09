@@ -176,7 +176,8 @@ class ContinousGames():
                 # do skip replay
                 self.skip_replay = get_replay_setting()
                 new_score = packet.teams[0].score + packet.teams[1].score
-                if self.skip_replay and new_score != self.last_score:
+                if (self.skip_replay and new_score != self.last_score and not packet.game_info.is_round_active
+                    and not packet.game_info.is_kickoff_pause and not packet.game_info.is_match_ended):
                     self.last_score = new_score
                     skip_replay_macro()
             except Exception as ex:
@@ -326,11 +327,11 @@ def skip_replay_macro():
 
         # Ensure the window is focused
         win.set_focus()
-        time.sleep(0.5)  # Allow time for focus
+        time.sleep(1.5)  # Allow time for focus
         win.click_input(button='right')
-        for _ in range(0, 15):
-            time.sleep(0.5)
-            win.click_input(button='right')
+        # for _ in range(0, 15):
+        #     time.sleep(0.5)
+        #     win.click_input(button='right')
     except Exception as e:
         print(f"Error executing macro: {e}")
 

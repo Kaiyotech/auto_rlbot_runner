@@ -33,6 +33,8 @@ class ContinousGames():
         self.orange = ''
         self.num_players = ''
         self.last_ten = []
+        self.skip_replay = get_replay_setting()
+        self.last_score = 0
         score_file = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\last_scores.txt", "r")
         for line in score_file:
             self.last_ten.append(line.strip())
@@ -170,6 +172,13 @@ class ContinousGames():
                     print("New round started")
                     break
                 previous_check_time = packet.game_info.seconds_elapsed
+
+                # do skip replay
+                self.skip_replay = get_replay_setting()
+                new_score = packet.teams[0].score + packet.teams[1].score
+                if self.skip_replay and new_score != self.last_score:
+                    self.last_score = new_score
+                    skip_replay_macro()
             except Exception as ex:
                 print(ex)
 
@@ -308,6 +317,23 @@ def choose_player_x_macro(x):
         print(f"Error executing macro: {e}")
 
 
+def skip_replay_macro():
+
+    app = Application(backend='uia')
+    try:
+        app.connect(title_re='Rocket League.*')
+        win = app.window(title_re='Rocket League.*')
+
+        # Ensure the window is focused
+        win.set_focus()
+        time.sleep(0.5)  # Allow time for focus
+        win.click_input(button='right')
+        for _ in range(0, 15):
+            time.sleep(0.5)
+            win.click_input(button='right')
+    except Exception as e:
+        print(f"Error executing macro: {e}")
+
 def get_opponent(blue=False):
     split_command = "!setoppo" if not blue else "!setoppoblue"
     oppo_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent.txt" if not blue\
@@ -410,6 +436,22 @@ def get_ot_setting():
                 return False
     except Exception as e:
         print(f"Error reading OT file: {e}")
+        return
+
+
+def get_replay_setting():
+    my_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\set_skip_replay.txt"
+
+    try:
+        with open(my_file, 'r') as fh:
+            my_line = fh.readline()
+            my_line = my_line.split("!setskipreplay")[1].strip()
+            if my_line.lower() == 'true':
+                return True
+            else:
+                return False
+    except Exception as e:
+        print(f"Error reading skip replay file: {e}")
         return
 
 

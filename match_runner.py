@@ -120,7 +120,7 @@ def run_match(bot_configs: List[PlayerConfig], _script_configs: List[ScriptConfi
             # match_config.mutators.
             match_config.auto_save_replay = False
             match_config.instant_start = False
-            match_config.skip_replays = True
+            match_config.skip_replays = False
 
             # if sm is None:
             sm = get_fresh_setup_manager(match_config)

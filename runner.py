@@ -328,7 +328,8 @@ def skip_replay_macro():
         # Ensure the window is focused
         win.set_focus()
         time.sleep(1.5)  # Allow time for focus
-        win.click_input(button='right')
+        win.type_keys("{x down}" "{x up}")
+        # win.click_input(button='right')
         # for _ in range(0, 15):
         #     time.sleep(0.5)
         #     win.click_input(button='right')

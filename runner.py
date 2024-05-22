@@ -7,7 +7,8 @@ from threading import Thread
 from typing import List, Optional, Dict
 
 from rlbot.matchconfig.match_config import PlayerConfig
-from rlbot.parsing.bot_config_bundle import BotConfigBundle, get_bot_config_bundle
+from rlbot.parsing.bot_config_bundle import BotConfigBundle
+from rlbot.parsing.bot_config_bundle import get_bot_config_bundle
 from rlbot.parsing.directory_scanner import scan_directory_for_bot_configs
 from rlbot.utils.game_state_util import Vector3
 from rlbot.utils.structures.game_data_struct import GameTickPacket
@@ -339,8 +340,7 @@ def get_opponent(blue=False):
     split_command = "!setoppo" if not blue else "!setoppoblue"
     oppo_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent.txt" if not blue\
         else "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent_blue.txt"
-    bot_bundle = list(
-                scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis"))
+    bot_bundle = [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot.cfg")]
     try:
         with open(oppo_file, 'r') as fh:
             line = fh.readline()
@@ -358,8 +358,10 @@ def get_opponent(blue=False):
             elif line.lower() == 'level5':
                 line = random.choice(['nexto', 'optiv1'])
 
-            if line.lower() == 'opti':
+            if line.lower() == 'opti' or line.lower() == 'opti_gp':
                 return bot_bundle
+            elif line.lower() == 'opti-fr' or line.lower() == 'opti_fr':
+                return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_fr.cfg")]
             elif line.lower() == 'necto':
                 bot_bundle = list(scan_directory_for_bot_configs(
              "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Necto"))

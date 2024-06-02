@@ -218,7 +218,7 @@ class ContinousGames():
             self.kickoff_game = get_kickoff_setting()
             if self.kickoff_game:
                 script = ScriptConfig(
-                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\kickoffonly\\kickoff_only.cfg")
+                    "C:\\Users\\kchin\\Code\\Kaiyotech\\KickoffOnly_delay_rlbot_script\\kickoff_only.cfg")
 
                 scripts.append(script)
 

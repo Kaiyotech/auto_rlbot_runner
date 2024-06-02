@@ -6,7 +6,7 @@ from pathlib import Path
 from threading import Thread
 from typing import List, Optional, Dict
 
-from rlbot.matchconfig.match_config import PlayerConfig
+from rlbot.matchconfig.match_config import PlayerConfig, ScriptConfig
 from rlbot.parsing.bot_config_bundle import BotConfigBundle
 from rlbot.parsing.bot_config_bundle import get_bot_config_bundle
 from rlbot.parsing.directory_scanner import scan_directory_for_bot_configs
@@ -36,6 +36,7 @@ class ContinousGames():
         self.last_ten = []
         self.skip_replay = get_replay_setting()
         self.last_score = 0
+        self.kickoff_game = get_kickoff_setting()
         score_file = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\last_scores.txt", "r")
         for line in score_file:
             self.last_ten.append(line.strip())
@@ -77,10 +78,10 @@ class ContinousGames():
             return bot
 
 
-    def start_match(self, bots: List[PlayerConfig], map):
+    def start_match(self, bots: List[PlayerConfig], scripts: List[ScriptConfig], my_map):
         if self.active_thread and self.active_thread.is_alive():
             self.active_thread.join(3.0)
-        self.active_thread = Thread(target=run_match, args=(bots, None, map), daemon=True)
+        self.active_thread = Thread(target=run_match, args=(bots, scripts, my_map, self.kickoff_game), daemon=True)
         self.active_thread.start()
 
     async def periodic_check_started(self, num_players):
@@ -213,8 +214,15 @@ class ContinousGames():
                 else:
                     bots.append(self.make_bot_config(bot_bundles_orange[0], 0, team_num))
             game_map = get_map()
+            scripts = []
+            self.kickoff_game = get_kickoff_setting()
+            if self.kickoff_game:
+                script = ScriptConfig(
+                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\kickoffonly\\kickoff_only.cfg")
 
-            self.start_match(bots, game_map)
+                scripts.append(script)
+
+            self.start_match(bots, scripts, game_map)
             await asyncio.create_task(self.periodic_check_started(num_players))
             # await asyncio.create_task(self.periodic_check_no_touch())
             await asyncio.sleep(10)
@@ -363,6 +371,8 @@ def get_opponent(blue=False):
                 return bot_bundle
             elif line.lower() == 'opti-fr' or line.lower() == 'opti_fr':
                 return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_fr.cfg")]
+            elif line.lower() == 'opti-ko' or line.lower() == 'opti_ko':
+                return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_ko.cfg")]
             elif line.lower() == 'necto':
                 bot_bundle = list(scan_directory_for_bot_configs(
              "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Necto"))
@@ -450,6 +460,22 @@ def get_replay_setting():
         with open(my_file, 'r') as fh:
             my_line = fh.readline()
             my_line = my_line.split("!setskipreplay")[1].strip()
+            if my_line.lower() == 'true':
+                return True
+            else:
+                return False
+    except Exception as e:
+        print(f"Error reading skip replay file: {e}")
+        return
+
+
+def get_kickoff_setting():
+    my_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\set_kickoff.txt"
+
+    try:
+        with open(my_file, 'r') as fh:
+            my_line = fh.readline()
+            my_line = my_line.split("!setkickoffgame")[1].strip()
             if my_line.lower() == 'true':
                 return True
             else:

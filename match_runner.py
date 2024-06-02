@@ -101,7 +101,7 @@ def get_fresh_setup_manager(_match_config: MatchConfig):
     return sm
 
 
-def run_match(bot_configs: List[PlayerConfig], _script_configs: List[ScriptConfig], game_map: AnyStr):
+def run_match(bot_configs: List[PlayerConfig], script_configs: List[ScriptConfig], game_map: AnyStr, kickoff_game):
     MAX_RETRIES = 10  # You can adjust the maximum number of attempts
     retry_count = 0
 
@@ -114,13 +114,18 @@ def run_match(bot_configs: List[PlayerConfig], _script_configs: List[ScriptConfi
             else:
                 match_config.game_map = game_map
             match_config.enable_state_setting = False
+            match_config.script_configs = script_configs
 
             match_config.player_configs = bot_configs
             match_config.mutators = MutatorConfig()
-            # match_config.mutators.
+
             match_config.auto_save_replay = False
             match_config.instant_start = False
             match_config.skip_replays = False
+            if kickoff_game:
+                print("starting kickoff game")
+                match_config.enable_state_setting = True
+                match_config.skip_replays = True
 
             # if sm is None:
             sm = get_fresh_setup_manager(match_config)

@@ -119,6 +119,7 @@ def run_match(bot_configs: List[PlayerConfig], script_configs: List[ScriptConfig
             match_config.player_configs = bot_configs
             match_config.mutators = MutatorConfig()
 
+
             match_config.auto_save_replay = False
             match_config.instant_start = False
             match_config.skip_replays = False
@@ -126,8 +127,9 @@ def run_match(bot_configs: List[PlayerConfig], script_configs: List[ScriptConfig
                 print("starting kickoff game")
                 match_config.enable_state_setting = True
                 match_config.skip_replays = True
+                match_config.mutators.max_score = 10
 
-            # if sm is None:
+                # if sm is None:
             sm = get_fresh_setup_manager(match_config)
             sm.early_start_seconds = 5
             sm.connect_to_game()

@@ -367,7 +367,7 @@ def get_opponent(blue=False):
             elif line.lower() == 'level5':
                 line = random.choice(['nexto', 'optiv1'])
 
-            if line.lower() == 'opti' or line.lower() == 'opti_gp':
+            if line.lower() == 'opti' or line.lower() == 'opti_gp' or line.lower() == 'opti-gp':
                 return bot_bundle
             elif line.lower() == 'opti-fr' or line.lower() == 'opti_fr':
                 return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_fr.cfg")]

@@ -64,6 +64,7 @@ STANDARD_MAPS = [
     "wasteland_grs_p",
     "eurostadium_dusk_p",
     "underwater_grs_p",
+    "beach_night_grs_p",
 ]
 
 NEW_STANDARD_MAPS = {

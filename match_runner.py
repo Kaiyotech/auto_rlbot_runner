@@ -77,6 +77,7 @@ NEW_STANDARD_MAPS = {
     "wasteland_pitched": "wasteland_grs_p",
     "neotokyo_hacked": "neotokyo_hax_p",
     "aquadome_salty": "underwater_grs_p",
+    "saltyshores_salty_fest": "beach_night_grs_p",
 }
 
 

@@ -395,6 +395,11 @@ def get_opponent(blue=False):
             elif line.lower() == "element":
                 bot_bundle = list(scan_directory_for_bot_configs(
                     "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\element"))
+            elif line.lower() == "kaiyobumbot" or line.lower() == "kbb":
+                print("hello")
+                bot_bundle = list(scan_directory_for_bot_configs(
+                    "C:\\Users\\kchin\\Code\\Kaiyotech\\KaiyoBumBot_play\\src"
+                ))
             elif line.lower() == "allstar" or line.lower() == "all-star" or line.lower() == "all star":
                 bot_bundle = ["allstar"]
             elif line.lower() == "rookie":

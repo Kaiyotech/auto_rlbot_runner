@@ -377,6 +377,8 @@ def get_opponent(blue=False):
                 return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_flick.cfg")]
             elif line.lower() == 'opti-db' or line.lower() == 'opti_db':
                 return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_db.cfg")]
+            elif line.lower() == 'opti-dt' or line.lower() == 'opti_dt':
+                return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_dt.cfg")]
             elif line.lower() == 'necto':
                 bot_bundle = list(scan_directory_for_bot_configs(
              "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Necto"))
@@ -418,7 +420,7 @@ def get_opponent(blue=False):
             return bot_bundle
 
     except Exception as e:
-        print(f"Error reading opponent file: {e}")
+        print(f"Error reading opponent file: {e}. File was {oppo_file}. ")
         return bot_bundle
 
 

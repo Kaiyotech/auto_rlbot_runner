@@ -375,6 +375,8 @@ def get_opponent(blue=False):
                 return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_ko.cfg")]
             elif line.lower() == 'opti-flick' or line.lower() == 'opti_flick':
                 return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_flick.cfg")]
+            elif line.lower() == 'opti-db' or line.lower() == 'opti_db':
+                return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_db.cfg")]
             elif line.lower() == 'necto':
                 bot_bundle = list(scan_directory_for_bot_configs(
              "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Necto"))

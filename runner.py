@@ -379,7 +379,7 @@ def get_opponent(blue=False):
                 return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_db.cfg")]
             elif line.lower() == 'opti-dt' or line.lower() == 'opti_dt':
                 return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_dt.cfg")]
-            elif line.lower() == 'opti-dt' or line.lower() == 'opti_pinch':
+            elif line.lower() == 'opti-pinch' or line.lower() == 'opti_pinch':
                 return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_pinch.cfg")]
             elif line.lower() == 'necto':
                 bot_bundle = list(scan_directory_for_bot_configs(

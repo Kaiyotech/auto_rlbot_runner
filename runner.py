@@ -214,13 +214,14 @@ class ContinousGames():
                 else:
                     bots.append(self.make_bot_config(bot_bundles_orange[0], 0, team_num))
             game_map = get_map()
-            scripts = []
+            scripts = [ScriptConfig("C:\\Users\\kchin\\Code\\kaiyotech\\GoalSpeed\\GoalSpeed.cfg")]
             self.kickoff_game = get_kickoff_setting()
             if self.kickoff_game:
                 script = ScriptConfig(
                     "C:\\Users\\kchin\\Code\\Kaiyotech\\KickoffOnly_delay_rlbot_script\\kickoff_only.cfg")
 
                 scripts.append(script)
+
 
             self.start_match(bots, scripts, game_map)
             await asyncio.create_task(self.periodic_check_started(num_players))
@@ -323,6 +324,7 @@ def choose_player_x_macro(x):
         time.sleep(0.5)  # Allow time for focus
         win.type_keys("{h down}" "{h up}")
         win.type_keys(f"{{{x} down}}" f"{{{x} up}}")
+        win.type_keys("{q down}" "{q up}")  # for FOV change
     except Exception as e:
         print(f"Error executing macro: {e}")
 

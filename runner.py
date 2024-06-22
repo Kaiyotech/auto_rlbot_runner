@@ -368,6 +368,8 @@ def get_opponent(blue=False):
                 line = random.choice(['necto', 'element'])
             elif line.lower() == 'level5':
                 line = random.choice(['nexto', 'optiv1'])
+            elif line.lower() == 'submodel':
+                line = random.choice(['opti-gp', 'opti-fr', 'opti-flick', 'opti-db', 'opti-dt'])
 
             if line.lower() == 'opti' or line.lower() == 'opti_gp' or line.lower() == 'opti-gp':
                 return bot_bundle

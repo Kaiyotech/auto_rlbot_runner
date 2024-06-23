@@ -37,6 +37,7 @@ class ContinousGames():
         self.skip_replay = get_replay_setting()
         self.last_score = 0
         self.kickoff_game = get_kickoff_setting()
+        self.last_cycle_mode = 3
         score_file = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\last_scores.txt", "r")
         for line in score_file:
             self.last_ten.append(line.strip())
@@ -77,12 +78,31 @@ class ContinousGames():
             bot.team = team_num
             return bot
 
-
     def start_match(self, bots: List[PlayerConfig], scripts: List[ScriptConfig], my_map):
         if self.active_thread and self.active_thread.is_alive():
             self.active_thread.join(3.0)
         self.active_thread = Thread(target=run_match, args=(bots, scripts, my_map, self.kickoff_game), daemon=True)
         self.active_thread.start()
+
+    def get_num_cars(self, allowed_modes):
+        num_cars_fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\new_mode.txt", "r")
+        try:
+            mode = num_cars_fh.read()
+            mode = mode.split("!setmode")[1].strip()
+            if mode.lower() == 'random':
+                return None
+            elif mode.lower() == 'cycle':
+                self.last_cycle_mode += 1
+                allowed_modes.sort()
+                if self.last_cycle_mode * 2 > allowed_modes[-1]:
+                    self.last_cycle_mode = allowed_modes[0] // 2
+                mode = self.last_cycle_mode
+            mode = int(mode) * 2
+            if mode not in allowed_modes:
+                mode = None
+        except:
+            return None
+        return mode
 
     async def periodic_check_started(self, num_players):
         packet = GameTickPacket()  # noqa
@@ -198,7 +218,7 @@ class ContinousGames():
                         f2.write("")
                 except Exception as e:
                     print(f"Error writing to file: {e}")
-            mode = get_num_cars(self.allowed_modes)
+            mode = self.get_num_cars(self.allowed_modes)
             num_players = random.choice(self.allowed_modes) if mode is None else mode
             bot_bundles_blue = get_opponent(True)
             bot_bundles_orange = get_opponent()
@@ -261,21 +281,6 @@ def get_map():
                 break
     fh.close()
     return game_map
-
-
-def get_num_cars(allowed_modes):
-    num_cars_fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\new_mode.txt", "r")
-    try:
-        mode = num_cars_fh.read()
-        mode = mode.split("!setmode")[1].strip()
-        if mode.lower() == 'random':
-            return None
-        mode = int(mode) * 2
-        if mode not in allowed_modes:
-            mode = None
-    except:
-        return None
-    return mode
 
 
 # from EastVillage

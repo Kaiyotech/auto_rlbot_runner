@@ -291,8 +291,8 @@ class ContinousGames():
             mode = self.get_num_cars(self.allowed_modes)
             num_players = random.choice(self.allowed_modes) if mode is None else mode
             allowed_cars = self.get_allowed_cars()
-            bot_bundles_blue = get_opponent(True, allowed_cars)
-            bot_bundles_orange = get_opponent(False, allowed_cars)
+            bot_bundles_blue = get_opponent(True, allowed_cars, self.enable_selector)
+            bot_bundles_orange = get_opponent(False, allowed_cars, self.enable_selector)
             self.blue = bot_bundles_blue[0].name
             self.orange = bot_bundles_orange[0].name
             self.num_players = num_players // 2

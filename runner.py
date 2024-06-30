@@ -34,15 +34,18 @@ class ContinousGames():
         self.orange = ''
         self.num_players = ''
         self.last_ten = []
+        self.last_twenty = []
         self.skip_replay = get_replay_setting()
         self.last_score = 0
         self.kickoff_game = get_kickoff_setting()
+        self.enable_selector = False
         self.last_cycle_mode = 3
         self.sorted_cars = ['rookie', 'allstar', 'tensor', 'bumblebee', 'sdc',
                             'element', 'immortal', 'necto', 'optiv1', 'kbb', 'nexto']
-        score_file = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\last_scores.txt", "r")
+        score_file = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\save_scores.txt", "r")
         for line in score_file:
             self.last_ten.append(line.strip())
+            self.last_twenty.append(line.strip())
         save_pid()
 
     async def event_ready(self):
@@ -201,10 +204,61 @@ class ContinousGames():
                     if not skip_match:
                         game_string = f"{self.num_players}s: {self.blue} VS {self.orange} {packet.teams[0].score} - {packet.teams[1].score} // "
                         self.last_ten.insert(0, game_string)
+                        self.last_twenty.insert(0, game_string)
                         if len(self.last_ten) > 10:
                             self.last_ten.pop()
-                        score_file = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\last_scores.txt", "w")
-                        score_file.write("\n".join(self.last_ten))
+                        if len(self.last_twenty) > 20:
+                            self.last_twenty.pop()
+                        # check if all of last twenty are the same matchup
+                        all_same = True
+                        for match in self.last_twenty:
+                            info = match.split()
+                            num_players = info[0].split('s:')[0]
+                            if num_players != self.num_players:
+                                all_same = False
+                                break
+                            blue = info[1]
+                            orange = info[2]
+                            if blue != self.blue or orange != self.orange:
+                                all_same = False
+                                break
+                        # all 20 are the same, total them up and change the format
+                        if all_same:
+                            win_loss = (0, 0)
+                            total_score = (0, 0)
+                            to_write = []
+                            for match in self.last_twenty:
+                                info = match.split()
+                                blue_score = info[4]
+                                orange_score = info[6]
+                                if blue_score > orange_score:
+                                    win_loss[0] += 1
+                                else:
+                                    win_loss[1] += 1
+                                total_score[0] += blue_score
+                                total_score[1] += orange_score
+                                to_write.append(f"{packet.teams[0].score} - {packet.teams[1].score} // ")
+                            to_write.insert(0, f"Last 20 {self.num_players}s: {self.blue} VS {self.orange}: {win_loss[0]} - {win_loss[1]} // Total Score: {total_score[0]} - {total_score[1]} //")
+                        else:
+                            win_loss = (0, 0)
+                            total_score = (0, 0)
+                            to_write = []
+                            for match in self.last_ten:
+                                info = match.split()
+                                blue_score = info[4]
+                                orange_score = info[6]
+                                if blue_score > orange_score:
+                                    win_loss[0] += 1
+                                else:
+                                    win_loss[1] += 1
+                                total_score[0] += blue_score
+                                total_score[1] += orange_score
+                            to_write = self.last_ten
+                            to_write.insert(0, f"Last 10: {win_loss[0]} - {win_loss[1]} // Total Score: {total_score[0]} - {total_score[1]} // ")
+                        score_file_last = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\last_scores.txt", "w")
+                        score_file_last.write("\n".join(to_write))
+                        score_file = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\save_scores.txt", "w")
+                        score_file.write("\n".join(self.last_twenty))
                         score_file.close()
                     await self.start_round()
                     print("New round started")
@@ -370,7 +424,7 @@ def skip_replay_macro():
         print(f"Error executing macro: {e}")
 
 
-def get_opponent(blue, allowed_opponents):
+def get_opponent(blue, allowed_opponents, enable_selector):
     split_command = "!setoppo" if not blue else "!setoppoblue"
     oppo_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent.txt" if not blue\
         else "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent_blue.txt"
@@ -394,8 +448,13 @@ def get_opponent(blue, allowed_opponents):
             elif line == 'submodel':
                 line = random.choice(['opti-gp', 'opti-fr', 'opti-flick', 'opti-db', 'opti-dt'])
 
-            if line == 'opti' or line == 'opti_gp' or line == 'opti-gp':
-                return bot_bundle
+            if line == 'opti' or line == 'selector':
+                if enable_selector:
+                    return bot_bundle
+                else:   # return GP if not enabled selector yet
+                    return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.cfg")]
+            elif line == 'opti_gp' or line == 'opti-gp':
+                return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.cfg")]
             elif line == 'opti-fr' or line == 'opti_fr':
                 return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_fr.cfg")]
             elif line == 'opti-ko' or line == 'opti_ko':
@@ -406,8 +465,8 @@ def get_opponent(blue, allowed_opponents):
                 return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_db.cfg")]
             elif line == 'opti-dt' or line == 'opti_dt':
                 return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_dt.cfg")]
-            elif line == 'opti-pinch' or line == 'opti_pinch':
-                return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_pinch.cfg")]
+            # elif line == 'opti-pinch' or line == 'opti_pinch':
+            #     return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_pinch.cfg")]
 
             # standardize the names so I can filter
             if line == 'kaiyobumbut':

@@ -231,6 +231,7 @@ class ContinousGames():
                         if all_same:
                             win_loss = [0, 0]
                             total_score = [0, 0]
+                            scores = []
                             for match in self.last_twenty:
                                 info = match.split()
                                 blue_score = int(info[4])
@@ -241,8 +242,11 @@ class ContinousGames():
                                     win_loss[1] += 1
                                 total_score[0] += blue_score
                                 total_score[1] += orange_score
-                                to_write.append(f"{blue_score} - {orange_score} // ")
+                                scores.append(f"{blue_score} - {orange_score} // ")
+                            # so that it's all on one line
+                            to_write.append(' '.join(scores))
                             to_write.insert(0, f"Last 20 {self.num_players}s: {self.blue} VS {self.orange}: {win_loss[0]} - {win_loss[1]} // Total Score: {total_score[0]} - {total_score[1]} //")
+                            to_write.append(' '.join([' '] * 10))  # append some blank lines to fill it out
                         else:
                             win_loss = [0, 0]
                             total_score = [0, 0]

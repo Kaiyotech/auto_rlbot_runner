@@ -46,6 +46,7 @@ class ContinousGames():
         for line in score_file:
             self.last_ten.append(line.strip())
             self.last_twenty.append(line.strip())
+        self.test_mode = True
         save_pid()
 
     async def event_ready(self):
@@ -197,10 +198,13 @@ class ContinousGames():
                         previous_ball_pos.y != 0 and packet.game_info.seconds_elapsed - previous_check_time > 30 and \
                         self.enforce_no_touch:
                     no_touch_ball = True
+                if self.test_mode:
+                    packet.game_info.is_match_ended = True
                 if packet.game_info.is_match_ended or (packet.game_info.is_overtime and not self.allow_overtime) or \
                         no_touch_ball or skip_match:
                     print("Match ended. Starting new round...")
                     # get score and info
+
                     if not skip_match:
                         game_string = f"{self.num_players}s: {self.blue} VS {self.orange} {packet.teams[0].score} - {packet.teams[1].score} // "
                         self.last_ten.insert(0, game_string)
@@ -237,7 +241,7 @@ class ContinousGames():
                                     win_loss[1] += 1
                                 total_score[0] += blue_score
                                 total_score[1] += orange_score
-                                to_write.append(f"{packet.teams[0].score} - {packet.teams[1].score} // ")
+                                to_write.append(f"{blue_score} - {orange_score} // ")
                             to_write.insert(0, f"Last 20 {self.num_players}s: {self.blue} VS {self.orange}: {win_loss[0]} - {win_loss[1]} // Total Score: {total_score[0]} - {total_score[1]} //")
                         else:
                             win_loss = [0, 0]
@@ -252,10 +256,11 @@ class ContinousGames():
                                     win_loss[1] += 1
                                 total_score[0] += blue_score
                                 total_score[1] += orange_score
-                            to_write = self.last_ten
+                            to_write = self.last_ten.copy()
                             to_write.insert(0, f"Last 10: {win_loss[0]} - {win_loss[1]} // Total Score: {total_score[0]} - {total_score[1]} // ")
                         score_file_last = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\last_scores.txt", "w")
                         score_file_last.write("\n".join(to_write))
+                        score_file_last.close()
                         score_file = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\save_scores.txt", "w")
                         score_file.write("\n".join(self.last_twenty))
                         score_file.close()

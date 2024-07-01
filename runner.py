@@ -209,6 +209,7 @@ class ContinousGames():
                             self.last_ten.pop()
                         while len(self.last_twenty) > 20:
                             self.last_twenty.pop()
+                        to_write = []
                         # check if all of last twenty are the same matchup
                         all_same = True
                         for match in self.last_twenty:
@@ -226,7 +227,6 @@ class ContinousGames():
                         if all_same:
                             win_loss = [0, 0]
                             total_score = [0, 0]
-                            to_write = []
                             for match in self.last_twenty:
                                 info = match.split()
                                 blue_score = int(info[4])

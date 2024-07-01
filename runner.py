@@ -205,32 +205,32 @@ class ContinousGames():
                         game_string = f"{self.num_players}s: {self.blue} VS {self.orange} {packet.teams[0].score} - {packet.teams[1].score} // "
                         self.last_ten.insert(0, game_string)
                         self.last_twenty.insert(0, game_string)
-                        if len(self.last_ten) > 10:
+                        while len(self.last_ten) > 10:
                             self.last_ten.pop()
-                        if len(self.last_twenty) > 20:
+                        while len(self.last_twenty) > 20:
                             self.last_twenty.pop()
                         # check if all of last twenty are the same matchup
                         all_same = True
                         for match in self.last_twenty:
                             info = match.split()
-                            num_players = info[0].split('s:')[0]
+                            num_players = int(info[0].split('s:')[0])
                             if num_players != self.num_players:
                                 all_same = False
                                 break
                             blue = info[1]
-                            orange = info[2]
+                            orange = info[3]
                             if blue != self.blue or orange != self.orange:
                                 all_same = False
                                 break
                         # all 20 are the same, total them up and change the format
                         if all_same:
-                            win_loss = (0, 0)
-                            total_score = (0, 0)
+                            win_loss = [0, 0]
+                            total_score = [0, 0]
                             to_write = []
                             for match in self.last_twenty:
                                 info = match.split()
-                                blue_score = info[4]
-                                orange_score = info[6]
+                                blue_score = int(info[4])
+                                orange_score = int(info[6])
                                 if blue_score > orange_score:
                                     win_loss[0] += 1
                                 else:
@@ -240,13 +240,12 @@ class ContinousGames():
                                 to_write.append(f"{packet.teams[0].score} - {packet.teams[1].score} // ")
                             to_write.insert(0, f"Last 20 {self.num_players}s: {self.blue} VS {self.orange}: {win_loss[0]} - {win_loss[1]} // Total Score: {total_score[0]} - {total_score[1]} //")
                         else:
-                            win_loss = (0, 0)
-                            total_score = (0, 0)
-                            to_write = []
+                            win_loss = [0, 0]
+                            total_score = [0, 0]
                             for match in self.last_ten:
                                 info = match.split()
-                                blue_score = info[4]
-                                orange_score = info[6]
+                                blue_score = int(info[4])
+                                orange_score = int(info[6])
                                 if blue_score > orange_score:
                                     win_loss[0] += 1
                                 else:
@@ -428,7 +427,10 @@ def get_opponent(blue, allowed_opponents, enable_selector):
     split_command = "!setoppo" if not blue else "!setoppoblue"
     oppo_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent.txt" if not blue\
         else "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent_blue.txt"
-    bot_bundle = [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot.cfg")]
+    if enable_selector:
+        bot_bundle = [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot.cfg")]
+    else:
+        bot_bundle = [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.cfg")]
     try:
         with open(oppo_file, 'r') as fh:
             line = fh.readline()

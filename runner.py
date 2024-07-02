@@ -84,10 +84,10 @@ class ContinousGames():
             bot.team = team_num
             return bot
 
-    def start_match(self, bots: List[PlayerConfig], scripts: List[ScriptConfig], my_map):
+    def start_match(self, bots: List[PlayerConfig], scripts: List[ScriptConfig], my_map, snowday):
         if self.active_thread and self.active_thread.is_alive():
             self.active_thread.join(3.0)
-        self.active_thread = Thread(target=run_match, args=(bots, scripts, my_map, self.kickoff_game), daemon=True)
+        self.active_thread = Thread(target=run_match, args=(bots, scripts, my_map, self.kickoff_game, snowday), daemon=True)
         self.active_thread.start()
 
     def get_num_cars(self, allowed_modes):
@@ -246,7 +246,7 @@ class ContinousGames():
                             # so that it's all on one line
                             to_write.append(' '.join(scores))
                             to_write.insert(0, f"Last 20 {self.num_players}s: {self.blue} VS {self.orange}: {win_loss[0]} - {win_loss[1]} // Total Score: {total_score[0]} - {total_score[1]} //")
-                            to_write.append(' '.join([' '] * 10))  # append some blank lines to fill it out
+                            to_write.append([' '] * 10)  # append some blank lines to fill it out
                         else:
                             win_loss = [0, 0]
                             total_score = [0, 0]
@@ -320,9 +320,8 @@ class ContinousGames():
                     "C:\\Users\\kchin\\Code\\Kaiyotech\\KickoffOnly_delay_rlbot_script\\kickoff_only.cfg")
 
                 scripts.append(script)
-
-
-            self.start_match(bots, scripts, game_map)
+            snowday = get_snowday()
+            self.start_match(bots, scripts, game_map, snowday)
             await asyncio.create_task(self.periodic_check_started(num_players))
             # await asyncio.create_task(self.periodic_check_no_touch())
             await asyncio.sleep(10)
@@ -570,7 +569,23 @@ def get_ot_setting():
                 return False
     except Exception as e:
         print(f"Error reading OT file: {e}")
-        return
+        return True
+
+
+def get_snowday():
+    my_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\set_snowday.txt"
+
+    try:
+        with open(my_file, 'r') as fh:
+            my_line = fh.readline()
+            my_line = my_line.split("!setsnowday")[1].strip()
+            if my_line.lower() == 'true':
+                return True
+            else:
+                return False
+    except Exception as e:
+        print(f"Error reading snowday file: {e}")
+        return False
 
 
 def get_replay_setting():

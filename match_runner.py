@@ -103,14 +103,18 @@ def get_fresh_setup_manager(_match_config: MatchConfig):
     return sm
 
 
-def run_match(bot_configs: List[PlayerConfig], script_configs: List[ScriptConfig], game_map: AnyStr, kickoff_game):
+def run_match(bot_configs: List[PlayerConfig], script_configs: List[ScriptConfig], game_map: AnyStr, kickoff_game,
+              snowday):
     MAX_RETRIES = 10  # You can adjust the maximum number of attempts
     retry_count = 0
 
     while retry_count < MAX_RETRIES:
         try:
             match_config = MatchConfig()
-            match_config.game_mode = 'Soccer'
+            if snowday:
+                match_config.game_mode = 'Hockey'
+            else:
+                match_config.game_mode = 'Soccer'
             if game_map is None:
                 match_config.game_map = get_random_standard_map()
             else:

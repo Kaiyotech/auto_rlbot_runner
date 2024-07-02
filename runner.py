@@ -46,7 +46,7 @@ class ContinousGames():
         for line in score_file:
             self.last_ten.append(line.strip())
             self.last_twenty.append(line.strip())
-        self.test_mode = False
+        self.test_mode = True
         save_pid()
 
     async def event_ready(self):
@@ -246,7 +246,7 @@ class ContinousGames():
                             # so that it's all on one line
                             to_write.append(' '.join(scores))
                             to_write.insert(0, f"Last 20 {self.num_players}s: {self.blue} VS {self.orange}: {win_loss[0]} - {win_loss[1]} // Total Score: {total_score[0]} - {total_score[1]} //")
-                            to_write.append([' '] * 10)  # append some blank lines to fill it out
+                            to_write.extend([' '] * 10)  # append some blank lines to fill it out
                         else:
                             win_loss = [0, 0]
                             total_score = [0, 0]

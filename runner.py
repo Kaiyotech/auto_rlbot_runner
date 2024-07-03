@@ -38,7 +38,7 @@ class ContinousGames():
         self.skip_replay = get_replay_setting()
         self.last_score = 0
         self.kickoff_game = get_kickoff_setting()
-        self.enable_selector = False
+        self.enable_selector = True
         self.last_cycle_mode = 3
         self.sorted_cars = ['rookie', 'allstar', 'tensor', 'bumblebee', 'sdc',
                             'element', 'immortal', 'necto', 'optiv1', 'kbb', 'nexto']

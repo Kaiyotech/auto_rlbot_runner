@@ -46,7 +46,7 @@ class ContinousGames():
         for line in score_file:
             self.last_ten.append(line.strip())
             self.last_twenty.append(line.strip())
-        self.test_mode = True
+        self.test_mode = False
         save_pid()
 
     async def event_ready(self):

@@ -46,7 +46,7 @@ class ContinousGames():
         for line in score_file:
             self.last_ten.append(line.strip())
             self.last_twenty.append(line.strip())
-        self.test_mode = False
+        self.test_mode = True
         save_pid()
 
     async def event_ready(self):
@@ -456,7 +456,7 @@ def get_opponent(blue, allowed_opponents, enable_selector):
             elif line == 'level5':
                 line = random.choice(['nexto', 'optiv1', 'kbb'])
             elif line == 'submodel':
-                line = random.choice(['opti-gp', 'opti-fr', 'opti-flick', 'opti-db', 'opti-dt'])
+                line = random.choice(['opti-gp', 'opti-fr', 'opti-flick', 'opti-db', 'opti-dt', 'opti-defense'])
 
             if line == 'opti' or line == 'selector':
                 if enable_selector:
@@ -475,6 +475,8 @@ def get_opponent(blue, allowed_opponents, enable_selector):
                 return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_db.cfg")]
             elif line == 'opti-dt' or line == 'opti_dt':
                 return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_dt.cfg")]
+            elif line == 'opti-defense' or line == 'opti_defense':
+                return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_defense.cfg")]
             # elif line == 'opti-pinch' or line == 'opti_pinch':
             #     return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_pinch.cfg")]
 

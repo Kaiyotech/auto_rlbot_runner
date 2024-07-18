@@ -143,6 +143,7 @@ def run_match(bot_configs: List[PlayerConfig], script_configs: List[ScriptConfig
             sm.start_match()
             sm.launch_bot_processes()
             sm.infinite_loop()
+
             break
 
         except TimeoutError as e:

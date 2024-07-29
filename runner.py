@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import os
 import random
 import time
@@ -29,6 +30,9 @@ class ContinousGames():
         self.nick = 'ContinousGames'
         self.allow_overtime = get_ot_setting()
         self.enforce_no_touch = True
+        self.stuck_ball_time = 0
+        self.touch_timeout_sec = 10
+        self.previous_ball_pos = Vector3(0, 0, -100)
         self.allowed_modes = [2, 4, 6]
         self.blue = ''
         self.orange = ''
@@ -184,9 +188,9 @@ class ContinousGames():
         while True:
             await asyncio.sleep(1.0)
             # print("Checking if round ended")
-            previous_ball_pos = Vector3(0, 0, -100)
+
             # previous_player_pos = Vector3(0, 0, 0)
-            previous_check_time = 1000
+
             no_touch_ball = False
             # stuck_car = False
             self.allow_overtime = get_ot_setting()
@@ -194,9 +198,7 @@ class ContinousGames():
             try:
                 match_runner.sm.game_interface.update_live_data_packet(packet)
 
-                if packet.game_ball.physics.location == previous_ball_pos and previous_ball_pos.x != 0 and \
-                        previous_ball_pos.y != 0 and packet.game_info.seconds_elapsed - previous_check_time > 30 and \
-                        self.enforce_no_touch:
+                if self.stuck_ball_time != 0 and time.time() - self.stuck_ball_time > self.touch_timeout_sec and self.enforce_no_touch:
                     no_touch_ball = True
                 if self.test_mode:
                     packet.game_info.is_match_ended = True
@@ -271,8 +273,11 @@ class ContinousGames():
                     await self.start_round()
                     print("New round started")
                     break
-                previous_check_time = packet.game_info.seconds_elapsed
-
+                if packet.game_ball.physics.location == self.previous_ball_pos and self.stuck_ball_time == 0:
+                    self.stuck_ball_time = time.time()
+                elif packet.game_ball.physics.location != self.previous_ball_pos:
+                    self.stuck_ball_time = 0
+                self.previous_ball_pos = copy.deepcopy(packet.game_ball.physics.location)
                 # do skip replay
                 self.skip_replay = get_replay_setting()
                 new_score = packet.teams[0].score + packet.teams[1].score
@@ -286,6 +291,9 @@ class ContinousGames():
     async def start_round(self):
         try:
             print("trying to start round")
+            # reset touch stuff
+            self.stuck_ball_time = 0
+            self.previous_ball_pos = Vector3(0, 0, -100)
             # empty the slider files in case it's not Opti playing
             my_filenames = ['peak_blue.txt', 'peak_orange.txt']
             stream_dir = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\"

@@ -104,7 +104,7 @@ def get_fresh_setup_manager(_match_config: MatchConfig):
 
 
 def run_match(bot_configs: List[PlayerConfig], script_configs: List[ScriptConfig], game_map: AnyStr, kickoff_game,
-              snowday):
+              snowday, skip_replay):
     MAX_RETRIES = 10  # You can adjust the maximum number of attempts
     retry_count = 0
 
@@ -128,7 +128,7 @@ def run_match(bot_configs: List[PlayerConfig], script_configs: List[ScriptConfig
             match_config.enable_rendering = True
             match_config.auto_save_replay = False
             match_config.instant_start = False
-            match_config.skip_replays = False
+            match_config.skip_replays = skip_replay
             if kickoff_game:
                 print("starting kickoff game")
                 match_config.enable_state_setting = True

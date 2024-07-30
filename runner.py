@@ -31,7 +31,7 @@ class ContinousGames():
         self.allow_overtime = get_ot_setting()
         self.enforce_no_touch = True
         self.stuck_ball_time = 0
-        self.touch_timeout_sec = 10
+        self.touch_timeout_sec = 30
         self.previous_ball_pos = Vector3(0, 0, -100)
         self.allowed_modes = [2, 4, 6]
         self.blue = ''
@@ -89,9 +89,11 @@ class ContinousGames():
             return bot
 
     def start_match(self, bots: List[PlayerConfig], scripts: List[ScriptConfig], my_map, snowday):
+        self.skip_replay = get_replay_setting()
         if self.active_thread and self.active_thread.is_alive():
             self.active_thread.join(3.0)
-        self.active_thread = Thread(target=run_match, args=(bots, scripts, my_map, self.kickoff_game, snowday), daemon=True)
+        self.active_thread = Thread(target=run_match, args=(bots, scripts, my_map, self.kickoff_game, snowday,
+                                                            self.skip_replay), daemon=True)
         self.active_thread.start()
 
     def get_num_cars(self, allowed_modes):
@@ -279,12 +281,12 @@ class ContinousGames():
                     self.stuck_ball_time = 0
                 self.previous_ball_pos = copy.deepcopy(packet.game_ball.physics.location)
                 # do skip replay
-                self.skip_replay = get_replay_setting()
-                new_score = packet.teams[0].score + packet.teams[1].score
-                if (self.skip_replay and new_score != self.last_score and not packet.game_info.is_round_active
-                    and not packet.game_info.is_kickoff_pause and not packet.game_info.is_match_ended):
-                    self.last_score = new_score
-                    skip_replay_macro()
+                # self.skip_replay = get_replay_setting()
+                # new_score = packet.teams[0].score + packet.teams[1].score
+                # if (self.skip_replay and new_score != self.last_score and not packet.game_info.is_round_active
+                #     and not packet.game_info.is_kickoff_pause and not packet.game_info.is_match_ended):
+                #     self.last_score = new_score
+                #     skip_replay_macro()
             except Exception as ex:
                 print(ex)
 

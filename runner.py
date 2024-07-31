@@ -418,7 +418,7 @@ def choose_player_x_macro(x):
         time.sleep(0.5)  # Allow time for focus
         win.type_keys("{h down}" "{h up}")
         win.type_keys(f"{{{x} down}}" f"{{{x} up}}")
-        # win.type_keys("{q down}" "{q up}")  # for FOV change
+        win.type_keys("{q down}" "{q up}")  # for FOV change
     except Exception as e:
         print(f"Error executing macro: {e}")
 

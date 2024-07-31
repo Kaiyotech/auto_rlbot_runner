@@ -51,6 +51,7 @@ class ContinousGames():
             self.last_ten.append(line.strip())
             self.last_twenty.append(line.strip())
         self.test_mode = True
+        self.test_mode = False if os.environ["COMPUTERNAME"] != 'MSI' else self.test_mode
         save_pid()
 
     async def event_ready(self):

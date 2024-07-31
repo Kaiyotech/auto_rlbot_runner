@@ -50,7 +50,7 @@ class ContinousGames():
         for line in score_file:
             self.last_ten.append(line.strip())
             self.last_twenty.append(line.strip())
-        self.test_mode = False
+        self.test_mode = True
         save_pid()
 
     async def event_ready(self):
@@ -308,20 +308,20 @@ class ContinousGames():
                     print(f"Error writing to file: {e}")
             mode = self.get_num_cars(self.allowed_modes)
             num_players = random.choice(self.allowed_modes) if mode is None else mode
+            mid = num_players // 2
             allowed_cars = self.get_allowed_cars()
-            bot_bundles_blue = get_opponent(True, allowed_cars, self.enable_selector)
-            bot_bundles_orange = get_opponent(False, allowed_cars, self.enable_selector)
+            bot_bundles_blue = get_opponent(True, allowed_cars, self.enable_selector, mid)
+            bot_bundles_orange = get_opponent(False, allowed_cars, self.enable_selector, mid)
             self.blue = bot_bundles_blue[0].name
             self.orange = bot_bundles_orange[0].name
-            self.num_players = num_players // 2
+            self.num_players = mid
             bots = []
-            mid = num_players // 2
             for i in range(num_players):
                 team_num = 0 if i < mid else 1
                 if team_num == 0:
-                    bots.append(self.make_bot_config(bot_bundles_blue[0], 0, team_num))
+                    bots.append(self.make_bot_config(bot_bundles_blue[i], i, team_num))
                 else:
-                    bots.append(self.make_bot_config(bot_bundles_orange[0], 0, team_num))
+                    bots.append(self.make_bot_config(bot_bundles_orange[i - mid], i - mid, team_num))
             game_map = get_map()
             scripts = [ScriptConfig("C:\\Users\\kchin\\Code\\kaiyotech\\GoalSpeed\\GoalSpeed.cfg")]
             self.kickoff_game = get_kickoff_setting()
@@ -441,102 +441,137 @@ def skip_replay_macro():
         print(f"Error executing macro: {e}")
 
 
-def get_opponent(blue, allowed_opponents, enable_selector):
+def get_opponent(blue, allowed_opponents, enable_selector, teamsize):
     split_command = "!setoppo" if not blue else "!setoppoblue"
     oppo_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent.txt" if not blue\
         else "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent_blue.txt"
     if enable_selector:
-        bot_bundle = [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot.cfg")]
+        bot_bundle = [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot.cfg")] * teamsize
     else:
-        bot_bundle = [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.cfg")]
+        bot_bundle = [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.cfg")] * teamsize
     try:
         with open(oppo_file, 'r') as fh:
             line = fh.readline()
             # if line.startswith("used"):
             #     return bot_bundle
             line = line.split(split_command)[1].strip().lower()
-            if line == 'level1':
-                line = random.choice(['rookie', 'allstar'])
-            elif line == 'level2':
-                line = random.choice(['tensor', 'allstar'])
-            elif line == 'level3':
-                line = random.choice(['bumblebee', 'sdc'])
-            elif line == 'level4':
-                line = random.choice(['necto', 'element', 'immortal'])
-            elif line == 'level5':
-                line = random.choice(['nexto', 'optiv1', 'kbb'])
-            elif line == 'submodel':
-                line = random.choice(['opti-gp', 'opti-fr', 'opti-flick', 'opti-db', 'opti-dt', 'opti-defense'])
+            line = line.split(',')
+            # reduce line to teamsize if too big
+            while len(line) > teamsize:
+                line.pop()
+            # pad out with the first player if too small
+            if len(line) < teamsize:
+                num_to_pad = teamsize - len(line)
+                for i in range(teamsize - num_to_pad, teamsize):
+                    line.append(line[0])
+            index = -1
+            for car in line:
+                index += 1
+                car = car.strip()
+                # badly formed, just use selector
+                if len(car) < 2:
+                    car = 'opti'
+                if car == 'level1':
+                    car = random.choice(['rookie', 'allstar'])
+                elif car == 'level2':
+                    car = random.choice(['tensor', 'allstar'])
+                elif car == 'level3':
+                    car = random.choice(['bumblebee', 'sdc'])
+                elif car == 'level4':
+                    car = random.choice(['necto', 'element', 'immortal'])
+                elif car == 'level5':
+                    car = random.choice(['nexto', 'optiv1', 'kbb'])
+                elif car == 'submodel':
+                    car = random.choice(['opti-gp', 'opti-fr', 'opti-flick', 'opti-db', 'opti-dt', 'opti-defense'])
 
-            if line == 'opti' or line == 'selector':
-                if enable_selector:
-                    return bot_bundle
-                else:   # return GP if not enabled selector yet
-                    return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.cfg")]
-            elif line == 'opti_gp' or line == 'opti-gp':
-                return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.cfg")]
-            elif line == 'opti-fr' or line == 'opti_fr':
-                return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_fr.cfg")]
-            elif line == 'opti-ko' or line == 'opti_ko':
-                return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_ko.cfg")]
-            elif line == 'opti-flick' or line == 'opti_flick':
-                return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_flick.cfg")]
-            elif line == 'opti-db' or line == 'opti_db':
-                return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_db.cfg")]
-            elif line == 'opti-dt' or line == 'opti_dt':
-                return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_dt.cfg")]
-            elif line == 'opti-defense' or line == 'opti_defense':
-                return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_defense.cfg")]
-            # elif line == 'opti-pinch' or line == 'opti_pinch':
-            #     return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_pinch.cfg")]
+                if car == 'opti' or car == 'selector':
+                    if enable_selector:
+                        continue
+                    else:   # return GP if not enabled selector yet
+                        bot_bundle[index] = get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.cfg")
+                        continue
+                elif car == 'opti_gp' or car == 'opti-gp':
+                    bot_bundle[index] = get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.cfg")
+                    continue
+                elif car == 'opti-fr' or car == 'opti_fr':
+                    bot_bundle[index] = get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_fr.cfg")
+                    continue
+                elif car == 'opti-ko' or car == 'opti_ko':
+                    bot_bundle[index] = get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_ko.cfg")
+                    continue
+                elif car == 'opti-flick' or car == 'opti_flick':
+                    bot_bundle[index] = get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_flick.cfg")
+                    continue
+                elif car == 'opti-db' or car == 'opti_db':
+                    bot_bundle[index] = get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_db.cfg")
+                    continue
+                elif car == 'opti-dt' or car == 'opti_dt':
+                    bot_bundle[index] = get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_dt.cfg")
+                    continue
+                elif car == 'opti-defense' or car == 'opti_defense':
+                    bot_bundle[index] = get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_defense.cfg")
+                    continue
+                # elif car == 'opti-pinch' or car == 'opti_pinch':
+                #     return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_pinch.cfg")]
 
-            # standardize the names so I can filter
-            if line == 'kaiyobumbut':
-                line = 'kbb'
-            elif line == "all-star" or line == "all star":
-                line = 'allstar'
+                # standardize the names so I can filter
+                if car == 'kaiyobumbut':
+                    car = 'kbb'
+                elif car == "all-star" or car == "all star":
+                    car = 'allstar'
 
-            # put the minimum allowed
-            if line not in allowed_opponents:
-                line = allowed_opponents[0]
+                # put the minimum allowed
+                if car not in allowed_opponents:
+                    car = allowed_opponents[0]
 
-            if line == 'necto':
-                bot_bundle = list(scan_directory_for_bot_configs(
-             "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Necto"))
-            elif line == 'nexto':
-                bot_bundle = list(scan_directory_for_bot_configs(
-                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Nexto"))
-            elif line == "optiv1":
-                bot_bundle = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Opti_play_finals_rlbot2023"))
-            elif line == "sdc":
-                bot_bundle = list(scan_directory_for_bot_configs(
-                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Self-driving car"))
-            elif line == "tensor":
-                bot_bundle = list(scan_directory_for_bot_configs(
-                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\tensorbot"))
-            elif line == "immortal":
-                bot_bundle = list(scan_directory_for_bot_configs(
-                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\immortal"))
-            elif line == "element":
-                bot_bundle = list(scan_directory_for_bot_configs(
-                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\element"))
-            elif line == "kbb":
-                bot_bundle = list(scan_directory_for_bot_configs(
-                    "C:\\Users\\kchin\\Code\\Kaiyotech\\KaiyoBumBot_play\\src"
-                ))
-            # elif line == "allstar":
-            #     bot_bundle = ["allstar"]
-            # elif line == "rookie":
-            #     bot_bundle = ["rookie"]
-            elif line == "bumblebee":
-                bot_bundle = list(scan_directory_for_bot_configs(
-                    "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Botimus&Bumblebee"))
-            # elif line == "kamael":
-            #     bot_bundle = list(scan_directory_for_bot_configs(
-            #         "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Kamael_family"))
+                if car == 'necto':
+                    bot_bundle[index] = list(scan_directory_for_bot_configs(
+                 "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Necto"))[0]
+                    continue
+                elif car == 'nexto':
+                    bot_bundle[index] = list(scan_directory_for_bot_configs(
+                        "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Necto\\Nexto"))[0]
+                    continue
+                elif car == "optiv1":
+                    bot_bundle[index] = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Opti_play_finals_rlbot2023"))[0]
+                    continue
+                elif car == "sdc":
+                    bot_bundle[index] = list(scan_directory_for_bot_configs(
+                        "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Self-driving car"))[0]
+                    continue
+                elif car == "tensor":
+                    bot_bundle[index] = list(scan_directory_for_bot_configs(
+                        "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\tensorbot"))[0]
+                    continue
+                elif car == "immortal":
+                    bot_bundle[index] = list(scan_directory_for_bot_configs(
+                        "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\immortal"))[0]
+                    continue
+                elif car == "element":
+                    bot_bundle[index] = list(scan_directory_for_bot_configs(
+                        "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\element"))[0]
+                    continue
+                elif car == "kbb":
+                    bot_bundle[index] = list(scan_directory_for_bot_configs(
+                        "C:\\Users\\kchin\\Code\\Kaiyotech\\KaiyoBumBot_play\\src"
+                    ))[0]
+                    continue
+                # elif car == "allstar":
+                #     bot_bundle = ["allstar"]
+                # elif car == "rookie":
+                #     bot_bundle = ["rookie"]
+                elif car == "bumblebee":
+                    bot_bundle[index] = list(scan_directory_for_bot_configs(
+                        "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Botimus&Bumblebee"))[0]
+                    continue
+                # elif car == "kamael":
+                #     bot_bundle = list(scan_directory_for_bot_configs(
+                #         "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Kamael_family"))
 
-            # fh.seek(0, 0)
-            # fh.write("used\n")
+                # fh.seek(0, 0)
+                # fh.write("used\n")
+                index += 1
+
             return bot_bundle
 
     except Exception as e:

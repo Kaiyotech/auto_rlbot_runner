@@ -447,9 +447,13 @@ def get_opponent(blue, allowed_opponents, enable_selector, teamsize):
     oppo_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent.txt" if not blue\
         else "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent_blue.txt"
     if enable_selector:
-        bot_bundle = [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot.cfg")] * teamsize
+        bot_bundle = []
+        for _ in range(teamsize):
+         bot_bundle.append(get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot.cfg"))
     else:
-        bot_bundle = [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.cfg")] * teamsize
+        bot_bundle = []
+        for _ in range(teamsize):
+            bot_bundle.append(get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.cfg"))
     try:
         with open(oppo_file, 'r') as fh:
             line = fh.readline()

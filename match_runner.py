@@ -1,14 +1,7 @@
-import os
 import random
-import time
 from pathlib import Path
 
-from typing import Optional, List, AnyStr
-
-# from rlbot.matchconfig.loadout_config import LoadoutConfig
-# from rlbot.matchconfig.match_config import PlayerConfig, MatchConfig, MutatorConfig, ScriptConfig
-# from rlbot.parsing.incrementing_integer import IncrementingInteger
-# from rlbot.setup_manager import SetupManager, setup_manager_context
+from typing import List, AnyStr
 from rlbot.flat import *
 from rlbot.managers import MatchManager
 
@@ -193,23 +186,6 @@ def get_random_standard_map() -> str:
     return random.choice(STANDARD_MAPS)
 
 
-# sm: Optional[SetupManager] = None
-#
-#
-# def get_fresh_setup_manager(_match_config: MatchConfig):
-#     global sm
-#     # try to keep same
-#     if sm is not None: # and sm.match_config != match_config:
-#         try:
-#             sm.shut_down()
-#         except Exception as e:
-#             print(e)
-#     # elif sm is None:
-#     sm = SetupManager()
-#
-#     return sm
-
-
 def run_match(bot_configs: List[PlayerConfiguration], script_configs: List[ScriptConfiguration], game_map: AnyStr,
               kickoff_game,
               snowday, skip_replay):
@@ -223,52 +199,30 @@ def run_match(bot_configs: List[PlayerConfiguration], script_configs: List[Scrip
         match_config.game_map_upk = get_random_standard_map()
     else:
         match_config.game_map_upk = game_map
-    # match_config.game_map_upk = "Stadium_p"
     match_config.enable_state_setting = False
     match_config.script_configurations = script_configs
     match_config.auto_start_bots = True
 
     match_config.player_configurations = bot_configs
-    # match_config.mutator_settings = MutatorConfig()
 
     match_config.enable_rendering = True
     match_config.auto_save_replay = False
     match_config.instant_start = False
     match_config.skip_replays = skip_replay
+    match_config.launcher = Launcher.Epic
+
     # todo reenable this later
     # if kickoff_game:
     #     print("starting kickoff game")
     #     match_config.enable_state_setting = True
     #     match_config.skip_replays = True
 
-        # if sm is None:
-
-    # match_manager = MatchManager(RLBOT_SERVER_FOLDER)
-    #
-    # match_manager.ensure_server_started()
-    # match_manager.start_match(MATCH_CONFIG_PATH)
-    #
-    # sleep(5)
-    #
-    # while match_manager.game_state != flat.GameStateType.Ended:
-    #     sleep(0.1)
-    #
-    # match_manager.shut_down()
 
     # make sure rlbot binary is in same directory
     CURRENT_FILE = Path(__file__).parent
     match_manager = MatchManager(CURRENT_FILE)
     match_manager.ensure_server_started()
     match_manager.start_match(match_config)
-
-    # sm = get_fresh_setup_manager(match_config)
-    # sm.early_start_seconds = 5
-    # sm.connect_to_game()
-    # sm.load_match_config(match_config)
-    # sm.launch_early_start_bot_processes()
-    # sm.start_match()
-    # sm.launch_bot_processes()
-    # sm.infinite_loop()
 
     return match_manager
 

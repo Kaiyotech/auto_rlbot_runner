@@ -16,7 +16,8 @@ import match_runner
 
 BotID = str
 
-class ContinousGames():
+
+class ContinousGames:
     def __init__(self):
         self.match_runner = None
         self.active_thread: Optional[Thread] = None
@@ -85,107 +86,14 @@ class ContinousGames():
 
     def start_match(self, bots: List[PlayerConfiguration], scripts: List[ScriptConfiguration], my_map, snowday):
         self.skip_replay = get_replay_setting()
-        # if self.active_thread and self.active_thread.is_alive():
-        #     self.active_thread.join(3.0)
-        # self.active_thread = Thread(target=run_match, args=(bots, scripts, my_map, self.kickoff_game, snowday,
-        #                                                     self.skip_replay), daemon=True)
-        # self.active_thread.start()
         self.match_runner = run_match(bots, scripts, my_map, self.kickoff_game, snowday, self.skip_replay)
-
-    def get_num_cars(self, allowed_modes):
-        num_cars_fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\new_mode.txt", "r")
-        try:
-            mode = num_cars_fh.read()
-            mode = mode.split("!setmode")[1].strip()
-            if mode.lower() == 'random':
-                return None
-            elif mode.lower() == 'cycle':
-                self.last_cycle_mode += 1
-                allowed_modes.sort()
-                if self.last_cycle_mode * 2 > allowed_modes[-1]:
-                    self.last_cycle_mode = allowed_modes[0] // 2
-                mode = self.last_cycle_mode
-            mode = int(mode) * 2
-            if mode not in allowed_modes:
-                mode = None
-        except:
-            return None
-        return mode
-
-    def get_allowed_cars(self):
-        my_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\set_allowed_cars.txt"
-
-        try:
-            with open(my_file, 'r') as fh:
-                my_line = fh.readline()
-                lowest_car = my_line.split("!setworstallowedcar")[1].strip().lower()
-                lowest_car_index = self.sorted_cars.index(lowest_car)
-                allowed_cars = self.sorted_cars[lowest_car_index:]
-                return allowed_cars
-        except Exception as e:
-            print(f"Error reading OT file: {e}")
-            return
-
-    # async def periodic_check_started(self, num_players):
-
-        # packet = GameTickPacket()  # noqa
-        # started = False
-        # timeout = 30  # game start timeout
-        # while not started and timeout > 0:
-        #     await asyncio.sleep(1.0)
-        #     try:
-        #
-        #         match_runner.sm.game_interface.update_live_data_packet(packet)
-        #             if packet.game_info.is_round_active and packet.game_info.game_time_remaining > 60 and \
-        #                     packet.game_info.is_kickoff_pause:
-        #                 await asyncio.sleep(2.0)
-        #                 # print(packet.game_info)
-        #                 started = True
-        #                 get_director_choice(num_players)
-        #                 # await asyncio.sleep(1.0)
-        #                 # hide_hud_macro()
-        #         else:
-        #             print("Waiting for Rocket League to finish starting ...")
-        #         timeout -= 1
-        #     # except WrongProcessArgs as e:
-        #     #     print(f"Error: {e}. Restarting Rocket League...")
-        #     #     kill_rocket_league()  # You'll need to implement this function
-        #     #     await self.start_round()  # Restart the process
-        #     except Exception as ex:
-        #         print(ex)
-
-
-    # async def period_checks(self):
-
-
-    # async def periodic_check_no_touch(self):
-    #     packet = GameTickPacket()  # noqa
-    #     while True:
-    #         previous_ball_pos = Vector3(0, 0, -100)
-    #         previous_player_pos = Vector3(0, 0, 0)
-    #         await asyncio.sleep(30.0)
-    #         print("Checking no_touch")
-    #         no_touch_ball = False
-    #         stuck_car = False
-    #         try:
-    #             match_runner.sm.game_interface.update_live_data_packet(packet)
-    #             if packet.game_ball.physics.location == previous_ball_pos and previous_ball_pos.x != 0 and \
-    #                     previous_ball_pos.y != 0:
-    #                 no_touch_ball = True
-    #             if packet.game_cars[0].physics.location == previous_player_pos:
-    #                 stuck_car = True
-    #             if no_touch_ball or stuck_car:
-    #                 print("car stuck or ball no touch. Starting new round...")
-    #                 await self.start_round()
-    #                 print("New round started")
-    #                 break
-    #         except Exception as ex:
-    #             print(ex)
 
     async def periodically_check_match_ended(self):
         packet = GameTickPacket()  # noqa
         while True:
             await asyncio.sleep(1.0)
+            if packet is None:
+                continue
             # print("Checking if round ended")
 
             # previous_player_pos = Vector3(0, 0, 0)
@@ -319,13 +227,7 @@ class ContinousGames():
         self.blue = bot_bundles_blue[0].name
         self.orange = bot_bundles_orange[0].name
         self.num_players = mid
-        # bots = []
-        # for i in range(num_players):
-        #     team_num = 0 if i < mid else 1
-        #     if team_num == 0:
-        #         bots.append(bot_bundles_blue[i])
-        #     else:
-        #         bots.append(bot_bundles_orange[i - mid])
+
         bots = bot_bundles_blue + bot_bundles_orange
         game_map = get_map()
         # todo port scripts later
@@ -336,25 +238,55 @@ class ContinousGames():
         #         "C:\\Users\\kchin\\Code\\Kaiyotech\\KickoffOnly_delay_rlbot_script\\kickoff_only.cfg")
         #
         #     scripts.append(script)
+
         snowday = get_snowday()
         self.start_match(bots, [], game_map, snowday)
-        # await asyncio.create_task(self.periodic_check_started(num_players))
-        # self.match_runner.wait_for_valid_packet()  # this already happens in start match
-        # await asyncio.create_task(self.periodic_check_no_touch())
+
         await asyncio.sleep(10)
 
         await asyncio.create_task(self.periodically_check_match_ended())
-        # except WrongProcessArgs as e:
-        #     print(f"Error: {e}. Restarting Rocket League...")
-        #     kill_rocket_league()  # You'll need to implement this function
-        #     await self.start_round()  # Restart the process
 
+
+    def get_num_cars(self, allowed_modes):
+        num_cars_fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\new_mode.txt", "r")
+        try:
+            mode = num_cars_fh.read()
+            mode = mode.split("!setmode")[1].strip()
+            if mode.lower() == 'random':
+                return None
+            elif mode.lower() == 'cycle':
+                self.last_cycle_mode += 1
+                allowed_modes.sort()
+                if self.last_cycle_mode * 2 > allowed_modes[-1]:
+                    self.last_cycle_mode = allowed_modes[0] // 2
+                mode = self.last_cycle_mode
+            mode = int(mode) * 2
+            if mode not in allowed_modes:
+                mode = None
+        except:
+            return None
+        return mode
+
+    def get_allowed_cars(self):
+        my_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\set_allowed_cars.txt"
+
+        try:
+            with open(my_file, 'r') as fh:
+                my_line = fh.readline()
+                lowest_car = my_line.split("!setworstallowedcar")[1].strip().lower()
+                lowest_car_index = self.sorted_cars.index(lowest_car)
+                allowed_cars = self.sorted_cars[lowest_car_index:]
+                return allowed_cars
+        except Exception as e:
+            print(f"Error reading OT file: {e}")
+            return
 
 
 def kill_rocket_league():
     print("Attempting to kill Rocket League")
     os.system('taskkill /f /im RocketLeague.exe')
     time.sleep(30)
+
 
 def get_map():
     fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\new_map.txt", "r")

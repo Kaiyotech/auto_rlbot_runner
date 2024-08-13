@@ -186,15 +186,10 @@ def get_random_standard_map() -> str:
     return random.choice(STANDARD_MAPS)
 
 
-def run_match(bot_configs: List[PlayerConfiguration], script_configs: List[ScriptConfiguration], game_map: AnyStr,
-              kickoff_game,
-              snowday, skip_replay):
+def run_match(bot_configs: List[PlayerConfiguration], script_configs: List[ScriptConfiguration], game_map: AnyStr):
 
     match_config = MatchSettings()
-    if snowday:
-        match_config.game_mode = GameMode.Hockey
-    else:
-        match_config.game_mode = GameMode.Soccer
+    match_config.game_mode = GameMode.Soccer
     if game_map is None:
         match_config.game_map_upk = get_random_standard_map()
     else:
@@ -208,15 +203,7 @@ def run_match(bot_configs: List[PlayerConfiguration], script_configs: List[Scrip
     match_config.enable_rendering = True
     match_config.auto_save_replay = False
     match_config.instant_start = False
-    match_config.skip_replays = skip_replay
     match_config.launcher = Launcher.Epic
-
-    # todo reenable this later
-    # if kickoff_game:
-    #     print("starting kickoff game")
-    #     match_config.enable_state_setting = True
-    #     match_config.skip_replays = True
-
 
     # make sure rlbot binary is in same directory
     CURRENT_FILE = Path(__file__).parent

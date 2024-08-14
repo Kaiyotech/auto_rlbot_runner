@@ -210,6 +210,7 @@ def run_match(bot_configs: List[PlayerConfiguration], script_configs: List[Scrip
     match_config.instant_start = False
     match_config.skip_replays = skip_replay
     match_config.launcher = Launcher.Epic
+    match_config.existing_match_behavior = ExistingMatchBehavior.Restart
 
     # todo reenable this later
     # if kickoff_game:

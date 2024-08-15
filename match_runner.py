@@ -186,33 +186,21 @@ def get_random_standard_map() -> str:
     return random.choice(STANDARD_MAPS)
 
 
-def run_match(bot_configs: List[PlayerConfiguration], script_configs: List[ScriptConfiguration], game_map: AnyStr):
+def run_match(bot_configs: List[PlayerConfiguration], script_configs: List[ScriptConfiguration], game_map: AnyStr,
+              match_config: MatchSettings,
+              match_manager: MatchManager):
 
-    match_config = MatchSettings()
-    match_config.game_mode = GameMode.Soccer
     if game_map is None:
         match_config.game_map_upk = get_random_standard_map()
     else:
         match_config.game_map_upk = game_map
-    match_config.enable_state_setting = False
     match_config.script_configurations = script_configs
-    match_config.auto_start_bots = True
 
     match_config.player_configurations = bot_configs
 
-    match_config.enable_rendering = True
-    match_config.auto_save_replay = False
-    match_config.instant_start = False
-    match_config.launcher = Launcher.Epic
-    # match_config.existing_match_behavior = ExistingMatchBehavior.Restart
-    match_config.existing_match_behavior = ExistingMatchBehavior.Continue_And_Spawn
-    # make sure rlbot binary is in same directory
-    CURRENT_FILE = Path(__file__).parent
-    match_manager = MatchManager(CURRENT_FILE)
-    match_manager.ensure_server_started()
     match_manager.start_match(match_config)
 
-    return match_manager
+    return
 
 
 

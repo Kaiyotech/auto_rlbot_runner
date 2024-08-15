@@ -204,8 +204,8 @@ def run_match(bot_configs: List[PlayerConfiguration], script_configs: List[Scrip
     match_config.auto_save_replay = False
     match_config.instant_start = False
     match_config.launcher = Launcher.Epic
-    match_config.existing_match_behavior = ExistingMatchBehavior.Restart
-
+    # match_config.existing_match_behavior = ExistingMatchBehavior.Restart
+    match_config.existing_match_behavior = ExistingMatchBehavior.Continue_And_Spawn
     # make sure rlbot binary is in same directory
     CURRENT_FILE = Path(__file__).parent
     match_manager = MatchManager(CURRENT_FILE)

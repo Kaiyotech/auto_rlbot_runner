@@ -2,12 +2,14 @@ import asyncio
 import os
 import random
 import time
+from pathlib import Path
 from threading import Thread
-from typing import List, Optional
+from typing import List, Optional, Sequence
 from traceback import print_exc
 
+from rlbot import flat
 from rlbot.flat import *
-from rlbot.managers.match import get_player_config
+from rlbot.managers.match import get_player_config, MatchManager
 
 from pywinauto.application import Application
 
@@ -19,7 +21,6 @@ BotID = str
 
 class ContinousGames:
     def __init__(self):
-        self.match_runner = None
         self.active_thread: Optional[Thread] = None
         self.nick = 'ContinousGames'
         self.allow_overtime = get_ot_setting()
@@ -46,7 +47,26 @@ class ContinousGames:
             self.last_twenty.append(line.strip())
         self.test_mode = False
         self.test_mode = False if os.environ["COMPUTERNAME"] != 'MSI' else self.test_mode
+
         save_pid()
+
+        self.match_config = MatchSettings()
+        self.match_config.game_mode = GameMode.Soccer
+        self.match_config.enable_state_setting = False
+        self.match_config.script_configurations = []
+        self.match_config.auto_start_bots = True
+        self.match_config.enable_rendering = True
+        self.match_config.auto_save_replay = False
+        self.match_config.instant_start = False
+        self.match_config.launcher = Launcher.Epic
+        # match_config.existing_match_behavior = ExistingMatchBehavior.Restart
+        self.match_config.existing_match_behavior = ExistingMatchBehavior.Continue_And_Spawn
+
+        # make sure rlbot binary is in same directory
+        CURRENT_FILE = Path(__file__).parent
+        self.match_manager = MatchManager(CURRENT_FILE)
+        self.match_manager.ensure_server_started()
+
 
     async def event_ready(self):
         print(f'Ready | {self.nick}')
@@ -86,7 +106,16 @@ class ContinousGames:
 
     def start_match(self, bots: List[PlayerConfiguration], scripts: List[ScriptConfiguration], my_map, snowday):
         self.skip_replay = get_replay_setting()
-        self.match_runner = run_match(bots, scripts, my_map, self.kickoff_game, snowday, self.skip_replay)
+        self.match_manager = run_match(bots, scripts, my_map, self.kickoff_game, snowday, self.skip_replay,
+                                      match_config=self.match_config,
+                                      match_manager=self.match_manager
+                                      )
+        if self.test_mode:
+            self.match_manager.set_game_state(
+                DesiredGameState(
+                    game_info_state=DesiredGameInfoState(game_speed=10)
+                )
+            )
 
     async def periodically_check_match_ended(self):
         packet = GameTickPacket()  # noqa
@@ -103,7 +132,7 @@ class ContinousGames:
             self.allow_overtime = get_ot_setting()
             skip_match = get_skip_match()
             try:
-                packet: GameTickPacket = self.match_runner.packet
+                packet: GameTickPacket = self.match_manager.packet
 
                 if self.stuck_ball_time != 0 and time.time() - self.stuck_ball_time > self.touch_timeout_sec and self.enforce_no_touch:
                     no_touch_ball = True
@@ -281,6 +310,12 @@ class ContinousGames:
             print(f"Error reading OT file: {e}")
             return
 
+    def hide_hud_macro(self):
+        print("hiding hud")
+        self.match_manager.set_game_state(
+            DesiredGameState(console_commands=([ConsoleCommand(command="CycleHUD")]))
+            )
+
 
 def kill_rocket_league():
     print("Attempting to kill Rocket League")
@@ -308,20 +343,7 @@ def get_map():
 
 
 # from EastVillage
-def hide_hud_macro():
-    print("hiding hud")
-    app = Application(backend='uia')
-    try:
-        app.connect(title_re='Rocket League.*')
-        win = app.window(title_re='Rocket League.*')
 
-        # Ensure the window is focused
-        win.set_focus()
-        time.sleep(0.5)  # Allow time for focus
-
-        win.type_keys("{h down}" "{h up}")
-    except Exception as e:
-        print(f"Error executing macro: {e}")
 
 
 def hide_hud_choose_1_macro():

@@ -67,49 +67,59 @@ class ContinousGames:
         self.match_manager = MatchManager(CURRENT_FILE)
         self.match_manager.ensure_server_started()
 
+    def run(self):
+        while True:
+            self.start_round()
 
-    async def event_ready(self):
-        print(f'Ready | {self.nick}')
-        await self.start_round()
+    def start_round(self):
+        # try:
+        print("trying to start round")
+        # reset touch stuff
+        self.stuck_ball_time = 0
+        self.previous_ball_pos = Vector3(0, 0, -100)
+        # empty the slider files in case it's not Opti playing
+        my_filenames = ['peak_blue.txt', 'peak_orange.txt']
+        stream_dir = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\"
+        for filename in my_filenames:
+            try:
+                filename = os.path.join(stream_dir, filename)
+                with open(filename, 'w') as f2:
+                    f2.write("")
+            except Exception as e:
+                print(f"Error writing to file: {e}")
+        mode = self.get_num_cars(self.allowed_modes)
+        num_players = random.choice(self.allowed_modes) if mode is None else mode
+        mid = num_players // 2
+        allowed_cars = self.get_allowed_cars()
+        bot_bundles_blue = get_opponent(True, allowed_cars, self.enable_selector, mid)
+        bot_bundles_orange = get_opponent(False, allowed_cars, self.enable_selector, mid)
+        self.blue = bot_bundles_blue[0].name
+        self.orange = bot_bundles_orange[0].name
+        self.num_players = mid
 
-    # todo add psyonix back eventually
-    # def make_bot_config(self, bundle: BotConfigBundle, car_index, team_num) -> PlayerConfig:
-    #
-    #     if bundle == "allstar" or bundle == "rookie":
-    #         _package_dir = Path(__file__).absolute().parent
-    #         _resource_dir = _package_dir / "resources"
-    #
-    #         if bundle == "allstar":
-    #             psyonix_bot = _resource_dir / "psyonix_allstar.cfg"
-    #         else:
-    #             psyonix_bot = _resource_dir / "psyonix_rookie.cfg"
-    #         bot_bundle = get_bot_config_bundle(psyonix_bot)
-    #         bot = PlayerConfig()
-    #         bot.config_path = bot_bundle.config_path
-    #         bot.bot = True
-    #         bot.rlbot_controlled = False
-    #         bot.loadout_config = bot_bundle.generate_loadout_config(car_index, team_num)
-    #         psyonix_bot_skill = 1.0 if bundle == "allstar" else 0.0
-    #         bot.bot_skill = psyonix_bot_skill
-    #         bot.team = team_num
-    #         bot.name = bot_bundle.name
-    #         return bot
-    #     else:
-    #         bot = PlayerConfig()
-    #         bot.config_path = bundle.config_path
-    #         bot.bot = True
-    #         bot.rlbot_controlled = True
-    #         bot.loadout_config = bundle.generate_loadout_config(car_index, team_num)
-    #         bot.name = bundle.name
-    #         bot.team = team_num
-    #         return bot
+        bots = bot_bundles_blue + bot_bundles_orange
+        game_map = get_map()
+        # todo port scripts later
+        scripts = []
+        # scripts = [ScriptConfig("C:\\Users\\kchin\\Code\\kaiyotech\\GoalSpeed\\GoalSpeed.cfg")]
+        # self.kickoff_game = get_kickoff_setting()
+        # if self.kickoff_game:
+        #     script = ScriptConfig(
+        #         "C:\\Users\\kchin\\Code\\Kaiyotech\\KickoffOnly_delay_rlbot_script\\kickoff_only.cfg")
+        #
+        #     scripts.append(script)
+
+        snowday = get_snowday()
+        self.start_match(bots, scripts, game_map, snowday)
+        time.sleep(10)
+        self.periodically_check_match_ended()
 
     def start_match(self, bots: List[PlayerConfiguration], scripts: List[ScriptConfiguration], my_map, snowday):
         self.skip_replay = get_replay_setting()
-        self.match_manager = run_match(bots, scripts, my_map, self.kickoff_game, snowday, self.skip_replay,
-                                      match_config=self.match_config,
-                                      match_manager=self.match_manager
-                                      )
+        run_match(bots, scripts, my_map, self.kickoff_game, snowday, self.skip_replay,
+                  match_config=self.match_config,
+                  match_manager=self.match_manager
+                  )
         if self.test_mode:
             self.match_manager.set_game_state(
                 DesiredGameState(
@@ -141,7 +151,8 @@ class ContinousGames:
                 # pause on ended to allow dancing/final scoreboard for a bit (not right now)
                 # if packet.game_info.game_state_type == GameStateType.Ended:
                 #     time.sleep(6)
-                if packet.game_info.game_state_type == GameStateType.Ended or (packet.game_info.is_overtime and not self.allow_overtime) or \
+                if packet.game_info.game_state_type == GameStateType.Ended or (
+                        packet.game_info.is_overtime and not self.allow_overtime) or \
                         no_touch_ball or skip_match:
                     print("Match ended. Starting new round...")
                     # get score and info
@@ -186,7 +197,8 @@ class ContinousGames:
                                 scores.append(f"{blue_score} - {orange_score} // ")
                             # so that it's all on one line
                             to_write.append(' '.join(scores))
-                            to_write.insert(0, f"Last 20 {self.num_players}s: {self.blue} VS {self.orange}: {win_loss[0]} - {win_loss[1]} // Total Score: {total_score[0]} - {total_score[1]} //")
+                            to_write.insert(0,
+                                            f"Last 20 {self.num_players}s: {self.blue} VS {self.orange}: {win_loss[0]} - {win_loss[1]} // Total Score: {total_score[0]} - {total_score[1]} //")
                             to_write.extend([' '] * 10)  # append some blank lines to fill it out
                         else:
                             win_loss = [0, 0]
@@ -202,17 +214,21 @@ class ContinousGames:
                                 total_score[0] += blue_score
                                 total_score[1] += orange_score
                             to_write = self.last_ten.copy()
-                            to_write.insert(0, f"Last 10: {win_loss[0]} - {win_loss[1]} // Total Score: {total_score[0]} - {total_score[1]} // ")
-                        score_file_last = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\last_scores.txt", "w")
+                            to_write.insert(0,
+                                            f"Last 10: {win_loss[0]} - {win_loss[1]} // Total Score: {total_score[0]} - {total_score[1]} // ")
+                        score_file_last = open(
+                            "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\last_scores.txt", "w")
                         score_file_last.write("\n".join(to_write))
                         score_file_last.close()
-                        score_file = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\save_scores.txt", "w")
+                        score_file = open(
+                            "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\save_scores.txt", "w")
                         score_file.write("\n".join(self.last_twenty))
                         score_file.close()
                     await self.start_round()
                     print("New round started")
                     break
-                if len(packet.balls) > 0 and packet.balls[0].physics.location == self.previous_ball_pos and self.stuck_ball_time == 0:
+                if len(packet.balls) > 0 and packet.balls[
+                    0].physics.location == self.previous_ball_pos and self.stuck_ball_time == 0:
                     self.stuck_ball_time = time.time()
                 elif len(packet.balls) > 0 and packet.balls[0].physics.location != self.previous_ball_pos:
                     self.stuck_ball_time = 0
@@ -230,51 +246,6 @@ class ContinousGames:
             except Exception as ex:
                 print(ex)
                 print_exc()
-
-    async def start_round(self):
-        # try:
-        print("trying to start round")
-        # reset touch stuff
-        self.stuck_ball_time = 0
-        self.previous_ball_pos = Vector3(0, 0, -100)
-        # empty the slider files in case it's not Opti playing
-        my_filenames = ['peak_blue.txt', 'peak_orange.txt']
-        stream_dir = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\"
-        for filename in my_filenames:
-            try:
-                filename = os.path.join(stream_dir, filename)
-                with open(filename, 'w') as f2:
-                    f2.write("")
-            except Exception as e:
-                print(f"Error writing to file: {e}")
-        mode = self.get_num_cars(self.allowed_modes)
-        num_players = random.choice(self.allowed_modes) if mode is None else mode
-        mid = num_players // 2
-        allowed_cars = self.get_allowed_cars()
-        bot_bundles_blue = get_opponent(True, allowed_cars, self.enable_selector, mid)
-        bot_bundles_orange = get_opponent(False, allowed_cars, self.enable_selector, mid)
-        self.blue = bot_bundles_blue[0].name
-        self.orange = bot_bundles_orange[0].name
-        self.num_players = mid
-
-        bots = bot_bundles_blue + bot_bundles_orange
-        game_map = get_map()
-        # todo port scripts later
-        # scripts = [ScriptConfig("C:\\Users\\kchin\\Code\\kaiyotech\\GoalSpeed\\GoalSpeed.cfg")]
-        # self.kickoff_game = get_kickoff_setting()
-        # if self.kickoff_game:
-        #     script = ScriptConfig(
-        #         "C:\\Users\\kchin\\Code\\Kaiyotech\\KickoffOnly_delay_rlbot_script\\kickoff_only.cfg")
-        #
-        #     scripts.append(script)
-
-        snowday = get_snowday()
-        self.start_match(bots, [], game_map, snowday)
-
-        await asyncio.sleep(10)
-
-        await asyncio.create_task(self.periodically_check_match_ended())
-
 
     def get_num_cars(self, allowed_modes):
         num_cars_fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\new_mode.txt", "r")
@@ -314,7 +285,37 @@ class ContinousGames:
         print("hiding hud")
         self.match_manager.set_game_state(
             DesiredGameState(console_commands=([ConsoleCommand(command="CycleHUD")]))
-            )
+        )
+
+    def getset_director_choice(self, num_players):
+        # players are 123567 director is 9 auto is 0
+        my_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\set_director.txt"
+        per_team = num_players // 2
+        blue = list(range(0, per_team))
+        orange = list(range(5, 5 + per_team))
+        valid_values = blue + orange + [9, 0]
+        command = "ViewDefault"
+        try:
+            with open(my_file, 'r') as fh:
+                my_line = fh.readline()
+                my_line = my_line.split("!setdirector")[1].strip()
+                if my_line.lower() == 'true':
+                    command = "ViewDefault"
+                elif my_line.lower() == 'auto':
+                    command = "ViewAuto"
+                elif int(my_line) - 1 in valid_values:
+                    value = int(my_line) - 1
+                    # blue
+                    if value < per_team:
+                        command = f"ViewPlayer 0 {value}"
+                    else:
+                        command = f"ViewPlayer 1 {value - 5}"
+                self.match_manager.set_game_state(
+                    DesiredGameState(console_commands=([ConsoleCommand(command=command)]))
+                )
+        except Exception as e:
+            print(f"Error reading director file: {e}")
+            return
 
 
 def kill_rocket_league():
@@ -345,64 +346,10 @@ def get_map():
 # from EastVillage
 
 
-
-def hide_hud_choose_1_macro():
-    print("hiding hud and choosing player 1")
-    app = Application(backend='uia')
-    try:
-        app.connect(title_re='Rocket League.*')
-        win = app.window(title_re='Rocket League.*')
-
-        # Ensure the window is focused
-        win.set_focus()
-        time.sleep(0.5)  # Allow time for focus
-
-        win.type_keys("{h down}" "{h up}")
-        win.type_keys("{1 down}" "{1 up}")
-    except Exception as e:
-        print(f"Error executing macro: {e}")
-
-
-def choose_player_x_macro(x):
-    print(f"choosing player {x}")
-    app = Application(backend='uia')
-    try:
-        app.connect(title_re='Rocket League.*')
-        win = app.window(title_re='Rocket League.*')
-
-        # Ensure the window is focused
-        win.set_focus()
-        time.sleep(0.5)  # Allow time for focus
-        win.type_keys("{h down}" "{h up}")
-        win.type_keys(f"{{{x} down}}" f"{{{x} up}}")
-        win.type_keys("{q down}" "{q up}")  # for FOV change
-    except Exception as e:
-        print(f"Error executing macro: {e}")
-
-
-def skip_replay_macro():
-
-    app = Application(backend='uia')
-    try:
-        app.connect(title_re='Rocket League.*')
-        win = app.window(title_re='Rocket League.*')
-
-        # Ensure the window is focused
-        win.set_focus()
-        time.sleep(1.5)  # Allow time for focus
-        win.type_keys("{x down}" "{x up}")
-        # win.click_input(button='right')
-        # for _ in range(0, 15):
-        #     time.sleep(0.5)
-        #     win.click_input(button='right')
-    except Exception as e:
-        print(f"Error executing macro: {e}")
-
-
 def get_opponent(blue, allowed_opponents, enable_selector, teamsize):
     team = 0 if blue else 1
     split_command = "!setoppo" if not blue else "!setoppoblue"
-    oppo_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent.txt" if not blue\
+    oppo_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent.txt" if not blue \
         else "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent_blue.txt"
     if enable_selector:
         bot_bundle = []
@@ -455,45 +402,45 @@ def get_opponent(blue, allowed_opponents, enable_selector, teamsize):
                 if car == 'opti' or car == 'selector':
                     if enable_selector:
                         continue
-                    else:   # return GP if not enabled selector yet
+                    else:  # return GP if not enabled selector yet
                         bot_bundle[index] = get_player_config(team=team,
-                                                path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.toml",
-                                                type=RLBot())
+                                                              path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.toml",
+                                                              type=RLBot())
                         continue
                 elif car == 'opti_gp' or car == 'opti-gp':
                     bot_bundle[index] = get_player_config(team=team,
-                                                path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.toml",
-                                                type=RLBot())
+                                                          path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.toml",
+                                                          type=RLBot())
                     continue
                 elif car == 'opti-fr' or car == 'opti_fr':
                     bot_bundle[index] = get_player_config(team=team,
-                                                path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_fr.toml",
-                                                type=RLBot())
+                                                          path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_fr.toml",
+                                                          type=RLBot())
                     continue
                 elif car == 'opti-ko' or car == 'opti_ko':
                     bot_bundle[index] = get_player_config(team=team,
-                                                path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_ko.toml",
-                                                type=RLBot())
+                                                          path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_ko.toml",
+                                                          type=RLBot())
                     continue
                 elif car == 'opti-flick' or car == 'opti_flick':
                     bot_bundle[index] = get_player_config(team=team,
-                                                path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_flick.toml",
-                                                type=RLBot())
+                                                          path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_flick.toml",
+                                                          type=RLBot())
                     continue
                 elif car == 'opti-db' or car == 'opti_db':
                     bot_bundle[index] = get_player_config(team=team,
-                                                path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_db.toml",
-                                                type=RLBot())
+                                                          path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_db.toml",
+                                                          type=RLBot())
                     continue
                 elif car == 'opti-dt' or car == 'opti_dt':
                     bot_bundle[index] = get_player_config(team=team,
-                                                path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_dt.toml",
-                                                type=RLBot())
+                                                          path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_dt.toml",
+                                                          type=RLBot())
                     continue
                 elif car == 'opti-defense' or car == 'opti_defense':
                     bot_bundle[index] = get_player_config(team=team,
-                                                path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_defense.toml",
-                                                type=RLBot())
+                                                          path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_defense.toml",
+                                                          type=RLBot())
                     continue
                 # elif car == 'opti-pinch' or car == 'opti_pinch':
                 #     return [get_bot_config_bundle("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_pinch.cfg")]
@@ -510,13 +457,13 @@ def get_opponent(blue, allowed_opponents, enable_selector, teamsize):
 
                 if car == 'necto':
                     bot_bundle[index] = get_player_config(team=team,
-                                                path="C:\\Users\\kchin\\Code\\Kaiyotech\\nectov5\\Necto\\bot.toml",
-                                                type=RLBot())
+                                                          path="C:\\Users\\kchin\\Code\\Kaiyotech\\nectov5\\Necto\\bot.toml",
+                                                          type=RLBot())
                     continue
                 elif car == 'nexto':
                     bot_bundle[index] = get_player_config(team=team,
-                                                path="C:\\Users\\kchin\\Code\\Kaiyotech\\nectov5\\Nexto\\bot.toml",
-                                                type=RLBot())
+                                                          path="C:\\Users\\kchin\\Code\\Kaiyotech\\nectov5\\Nexto\\bot.toml",
+                                                          type=RLBot())
                     continue
                 # todo convert other bots eventually maybe
                 # elif car == "optiv1":
@@ -565,29 +512,37 @@ def get_opponent(blue, allowed_opponents, enable_selector, teamsize):
         print(f"Error reading opponent file: {e}. File was {oppo_file}. ")
         return bot_bundle
 
-
-def get_director_choice(num_players):
-    # players are 123567 director is 9 auto is 0
-    my_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\set_director.txt"
-    per_team = num_players // 2
-    blue = list(range(1, per_team + 1))
-    orange = list(range(5, 5 + per_team))
-    valid_values = blue + orange + [9, 0]
-    try:
-        with open(my_file, 'r') as fh:
-            my_line = fh.readline()
-            my_line = my_line.split("!setdirector")[1].strip()
-            if my_line.lower() == 'true':
-                choose_player_x_macro(9)
-            elif my_line.lower() == 'auto':
-                choose_player_x_macro(0)
-            elif int(my_line) in valid_values:
-                choose_player_x_macro(int(my_line))
-            else:
-                choose_player_x_macro(9)
-    except Exception as e:
-        print(f"Error reading peak file: {e}")
-        return
+    # todo add psyonix back eventually
+    # def make_bot_config(self, bundle: BotConfigBundle, car_index, team_num) -> PlayerConfig:
+    #
+    #     if bundle == "allstar" or bundle == "rookie":
+    #         _package_dir = Path(__file__).absolute().parent
+    #         _resource_dir = _package_dir / "resources"
+    #
+    #         if bundle == "allstar":
+    #             psyonix_bot = _resource_dir / "psyonix_allstar.cfg"
+    #         else:
+    #             psyonix_bot = _resource_dir / "psyonix_rookie.cfg"
+    #         bot_bundle = get_bot_config_bundle(psyonix_bot)
+    #         bot = PlayerConfig()
+    #         bot.config_path = bot_bundle.config_path
+    #         bot.bot = True
+    #         bot.rlbot_controlled = False
+    #         bot.loadout_config = bot_bundle.generate_loadout_config(car_index, team_num)
+    #         psyonix_bot_skill = 1.0 if bundle == "allstar" else 0.0
+    #         bot.bot_skill = psyonix_bot_skill
+    #         bot.team = team_num
+    #         bot.name = bot_bundle.name
+    #         return bot
+    #     else:
+    #         bot = PlayerConfig()
+    #         bot.config_path = bundle.config_path
+    #         bot.bot = True
+    #         bot.rlbot_controlled = True
+    #         bot.loadout_config = bundle.generate_loadout_config(car_index, team_num)
+    #         bot.name = bundle.name
+    #         bot.team = team_num
+    #         return bot
 
 
 def get_ot_setting():
@@ -671,16 +626,12 @@ def get_skip_match():
         return
 
 
-# def get_bot_config_bundle(path: str) -> PlayerConfiguration:
-#
-#     return PlayerConfiguration(variety=RLBot(), )
-
 def save_pid():
     pid = os.getpid()
     with open("runner_pid.txt", "w") as f:
         f.write(str(pid))
 
 
-if __name__ == '__main__':
-    bot = ContinousGames()
-    asyncio.run(bot.start_round())
+if __name__ == "__main__":
+    cont_games = ContinousGames()
+    cont_games.run()

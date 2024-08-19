@@ -31,4 +31,4 @@ taskkill /f /im RocketLeague.exe
 taskkill /f /im RocketLeague.exe 
 taskkill /f /im RocketLeague.exe 
 timeout /t 30 > nul
-start "RLBOT RUNNER" cmd /k "call .\venv\Scripts\activate.bat & python runner.py"
+start "RLBOT RUNNER" cmd /k "call .\venv311\Scripts\activate.bat & python runner.py"

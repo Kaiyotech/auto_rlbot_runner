@@ -105,7 +105,11 @@ class ContinousGames:
 
         snowday = get_snowday()
         self.start_match(bots, scripts, game_map, snowday, num_players)
-        time.sleep(10)
+        packet: GameTickPacket = self.match_manager.packet
+        # wait to start up
+        while packet is None or len(packet.balls) == 0 or len(packet.players) < 2:
+            packet: GameTickPacket = self.match_manager.packet
+            time.sleep(1)
         self.getset_director_choice(num_players)
         self.hide_hud_macro()
         self.periodically_check_match_ended()
@@ -126,17 +130,17 @@ class ContinousGames:
             )
 
     def periodically_check_match_ended(self):
-        packet = GameTickPacket()  # noqa
+
         self.allow_overtime = get_ot_setting()
         while True:
             time.sleep(1.0)
-            if packet is None:
-                continue
 
             no_touch_ball = False
             skip_match = get_skip_match()
             # try:
             packet: GameTickPacket = self.match_manager.packet
+            if packet is None:
+                continue
 
             if self.stuck_ball_time != 0 and time.time() - self.stuck_ball_time > self.touch_timeout_sec and self.enforce_no_touch:
                 no_touch_ball = True

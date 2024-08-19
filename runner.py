@@ -1,17 +1,11 @@
-import asyncio
 import os
 import random
 import time
 from pathlib import Path
 from threading import Thread
-from typing import List, Optional, Sequence
-from traceback import print_exc
-
-from rlbot import flat
+from typing import List, Optional
 from rlbot.flat import *
 from rlbot.managers.match import get_player_config, MatchManager
-
-from pywinauto.application import Application
 
 from match_runner import run_match
 import match_runner
@@ -52,7 +46,7 @@ class ContinousGames:
 
         self.match_config = MatchSettings()
         self.match_config.game_mode = GameMode.Soccer
-        self.match_config.enable_state_setting = False
+        self.match_config.enable_state_setting = True
         self.match_config.script_configurations = []
         self.match_config.auto_start_bots = True
         self.match_config.enable_rendering = True
@@ -110,11 +104,15 @@ class ContinousGames:
         #     scripts.append(script)
 
         snowday = get_snowday()
-        self.start_match(bots, scripts, game_map, snowday)
+        self.start_match(bots, scripts, game_map, snowday, num_players)
         time.sleep(10)
+        self.getset_director_choice(num_players)
+        self.hide_hud_macro()
         self.periodically_check_match_ended()
+        print("Match Ended")
 
-    def start_match(self, bots: List[PlayerConfiguration], scripts: List[ScriptConfiguration], my_map, snowday):
+    def start_match(self, bots: List[PlayerConfiguration], scripts: List[ScriptConfiguration], my_map, snowday,
+                    num_players):
         self.skip_replay = get_replay_setting()
         run_match(bots, scripts, my_map, self.kickoff_game, snowday, self.skip_replay,
                   match_config=self.match_config,
@@ -127,125 +125,112 @@ class ContinousGames:
                 )
             )
 
-    async def periodically_check_match_ended(self):
+    def periodically_check_match_ended(self):
         packet = GameTickPacket()  # noqa
+        self.allow_overtime = get_ot_setting()
         while True:
-            await asyncio.sleep(1.0)
+            time.sleep(1.0)
             if packet is None:
                 continue
-            # print("Checking if round ended")
-
-            # previous_player_pos = Vector3(0, 0, 0)
 
             no_touch_ball = False
-            # stuck_car = False
-            self.allow_overtime = get_ot_setting()
             skip_match = get_skip_match()
-            try:
-                packet: GameTickPacket = self.match_manager.packet
+            # try:
+            packet: GameTickPacket = self.match_manager.packet
 
-                if self.stuck_ball_time != 0 and time.time() - self.stuck_ball_time > self.touch_timeout_sec and self.enforce_no_touch:
-                    no_touch_ball = True
-                if self.test_mode:
-                    packet.game_info.game_state_type = GameStateType.Ended
-                # pause on ended to allow dancing/final scoreboard for a bit (not right now)
-                # if packet.game_info.game_state_type == GameStateType.Ended:
-                #     time.sleep(6)
-                if packet.game_info.game_state_type == GameStateType.Ended or (
-                        packet.game_info.is_overtime and not self.allow_overtime) or \
-                        no_touch_ball or skip_match:
-                    print("Match ended. Starting new round...")
-                    # get score and info
+            if self.stuck_ball_time != 0 and time.time() - self.stuck_ball_time > self.touch_timeout_sec and self.enforce_no_touch:
+                no_touch_ball = True
+            # pause on ended to allow dancing/final scoreboard for a bit (not right now)
+            # if packet.game_info.game_state_type == GameStateType.Ended:
+            #     time.sleep(6)
+            if packet.game_info.game_state_type == GameStateType.Ended or (
+                    packet.game_info.is_overtime and not self.allow_overtime) or \
+                    no_touch_ball or skip_match:
+                print("Match ended. Starting new round...")
 
-                    if not skip_match:
-                        game_string = f"{self.num_players}s: {self.blue} VS {self.orange} {packet.teams[0].score} - {packet.teams[1].score} // "
-                        self.last_ten.insert(0, game_string)
-                        self.last_twenty.insert(0, game_string)
-                        while len(self.last_ten) > 10:
-                            self.last_ten.pop()
-                        while len(self.last_twenty) > 20:
-                            self.last_twenty.pop()
-                        to_write = []
-                        # check if all of last twenty are the same matchup
-                        all_same = True
+                # get score and info
+                if not skip_match:
+                    game_string = f"{self.num_players}s: {self.blue} VS {self.orange} {packet.teams[0].score} - {packet.teams[1].score} // "
+                    self.last_ten.insert(0, game_string)
+                    self.last_twenty.insert(0, game_string)
+                    while len(self.last_ten) > 10:
+                        self.last_ten.pop()
+                    while len(self.last_twenty) > 20:
+                        self.last_twenty.pop()
+                    to_write = []
+                    # check if all of last twenty are the same matchup
+                    all_same = True
+                    for match in self.last_twenty:
+                        info = match.split()
+                        num_players = int(info[0].split('s:')[0])
+                        if num_players != self.num_players:
+                            all_same = False
+                            break
+                        blue = info[1]
+                        orange = info[3]
+                        if blue != self.blue or orange != self.orange:
+                            all_same = False
+                            break
+                    # all 20 are the same, total them up and change the format
+                    if all_same:
+                        win_loss = [0, 0]
+                        total_score = [0, 0]
+                        scores = []
                         for match in self.last_twenty:
                             info = match.split()
-                            num_players = int(info[0].split('s:')[0])
-                            if num_players != self.num_players:
-                                all_same = False
-                                break
-                            blue = info[1]
-                            orange = info[3]
-                            if blue != self.blue or orange != self.orange:
-                                all_same = False
-                                break
-                        # all 20 are the same, total them up and change the format
-                        if all_same:
-                            win_loss = [0, 0]
-                            total_score = [0, 0]
-                            scores = []
-                            for match in self.last_twenty:
-                                info = match.split()
-                                blue_score = int(info[4])
-                                orange_score = int(info[6])
-                                if blue_score > orange_score:
-                                    win_loss[0] += 1
-                                else:
-                                    win_loss[1] += 1
-                                total_score[0] += blue_score
-                                total_score[1] += orange_score
-                                scores.append(f"{blue_score} - {orange_score} // ")
-                            # so that it's all on one line
-                            to_write.append(' '.join(scores))
-                            to_write.insert(0,
-                                            f"Last 20 {self.num_players}s: {self.blue} VS {self.orange}: {win_loss[0]} - {win_loss[1]} // Total Score: {total_score[0]} - {total_score[1]} //")
-                            to_write.extend([' '] * 10)  # append some blank lines to fill it out
-                        else:
-                            win_loss = [0, 0]
-                            total_score = [0, 0]
-                            for match in self.last_ten:
-                                info = match.split()
-                                blue_score = int(info[4])
-                                orange_score = int(info[6])
-                                if blue_score > orange_score:
-                                    win_loss[0] += 1
-                                else:
-                                    win_loss[1] += 1
-                                total_score[0] += blue_score
-                                total_score[1] += orange_score
-                            to_write = self.last_ten.copy()
-                            to_write.insert(0,
-                                            f"Last 10: {win_loss[0]} - {win_loss[1]} // Total Score: {total_score[0]} - {total_score[1]} // ")
-                        score_file_last = open(
-                            "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\last_scores.txt", "w")
-                        score_file_last.write("\n".join(to_write))
-                        score_file_last.close()
-                        score_file = open(
-                            "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\save_scores.txt", "w")
-                        score_file.write("\n".join(self.last_twenty))
-                        score_file.close()
-                    await self.start_round()
-                    print("New round started")
-                    break
-                if len(packet.balls) > 0 and packet.balls[
-                    0].physics.location == self.previous_ball_pos and self.stuck_ball_time == 0:
-                    self.stuck_ball_time = time.time()
-                elif len(packet.balls) > 0 and packet.balls[0].physics.location != self.previous_ball_pos:
-                    self.stuck_ball_time = 0
-                self.previous_ball_pos = Vector3(packet.balls[0].physics.location.x,
-                                                 packet.balls[0].physics.location.y,
-                                                 packet.balls[0].physics.location.z
-                                                 ) if len(packet.balls) > 0 else Vector3(0, 0, -100)
-                # do skip replay
-                # self.skip_replay = get_replay_setting()
-                # new_score = packet.teams[0].score + packet.teams[1].score
-                # if (self.skip_replay and new_score != self.last_score and not packet.game_info.is_round_active
-                #     and not packet.game_info.is_kickoff_pause and not packet.game_info.is_match_ended):
-                #     self.last_score = new_score
-                #     skip_replay_macro()
-            except Exception as ex:
-                print(ex)
-                print_exc()
+                            blue_score = int(info[4])
+                            orange_score = int(info[6])
+                            if blue_score > orange_score:
+                                win_loss[0] += 1
+                            else:
+                                win_loss[1] += 1
+                            total_score[0] += blue_score
+                            total_score[1] += orange_score
+                            scores.append(f"{blue_score} - {orange_score} // ")
+                        # so that it's all on one line
+                        to_write.append(' '.join(scores))
+                        to_write.insert(0,
+                                        f"Last 20 {self.num_players}s: {self.blue} VS {self.orange}: {win_loss[0]} - {win_loss[1]} // Total Score: {total_score[0]} - {total_score[1]} //")
+                        to_write.extend([' '] * 10)  # append some blank lines to fill it out
+                    else:
+                        win_loss = [0, 0]
+                        total_score = [0, 0]
+                        for match in self.last_ten:
+                            info = match.split()
+                            blue_score = int(info[4])
+                            orange_score = int(info[6])
+                            if blue_score > orange_score:
+                                win_loss[0] += 1
+                            else:
+                                win_loss[1] += 1
+                            total_score[0] += blue_score
+                            total_score[1] += orange_score
+                        to_write = self.last_ten.copy()
+                        to_write.insert(0,
+                                        f"Last 10: {win_loss[0]} - {win_loss[1]} // Total Score: {total_score[0]} - {total_score[1]} // ")
+                    score_file_last = open(
+                        "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\last_scores.txt", "w")
+                    score_file_last.write("\n".join(to_write))
+                    score_file_last.close()
+                    score_file = open(
+                        "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\save_scores.txt", "w")
+                    score_file.write("\n".join(self.last_twenty))
+                    score_file.close()
+
+                break
+            if len(packet.balls) > 0 and packet.balls[
+                0].physics.location == self.previous_ball_pos and self.stuck_ball_time == 0:
+                self.stuck_ball_time = time.time()
+            elif len(packet.balls) > 0 and packet.balls[0].physics.location != self.previous_ball_pos:
+                self.stuck_ball_time = 0
+            self.previous_ball_pos = Vector3(packet.balls[0].physics.location.x,
+                                             packet.balls[0].physics.location.y,
+                                             packet.balls[0].physics.location.z
+                                             ) if len(packet.balls) > 0 else Vector3(0, 0, -100)
+
+            # except Exception as ex:
+            #     print(ex)
+            #     print_exc()
 
     def get_num_cars(self, allowed_modes):
         num_cars_fh = open("C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\new_mode.txt", "r")
@@ -282,9 +267,10 @@ class ContinousGames:
             return
 
     def hide_hud_macro(self):
-        print("hiding hud")
+        command = "CycleHUD"
+        print(f"hiding hud with command: {command}")
         self.match_manager.set_game_state(
-            DesiredGameState(console_commands=([ConsoleCommand(command="CycleHUD")]))
+            DesiredGameState(console_commands=([ConsoleCommand(command=command)]))
         )
 
     def getset_director_choice(self, num_players):
@@ -302,7 +288,7 @@ class ContinousGames:
                 if my_line.lower() == 'true':
                     command = "ViewDefault"
                 elif my_line.lower() == 'auto':
-                    command = "ViewAuto"
+                    command = "ViewAutoCam"
                 elif int(my_line) - 1 in valid_values:
                     value = int(my_line) - 1
                     # blue
@@ -310,18 +296,13 @@ class ContinousGames:
                         command = f"ViewPlayer 0 {value}"
                     else:
                         command = f"ViewPlayer 1 {value - 5}"
+                print(f"Setting viewer command: {command}")
                 self.match_manager.set_game_state(
                     DesiredGameState(console_commands=([ConsoleCommand(command=command)]))
                 )
         except Exception as e:
             print(f"Error reading director file: {e}")
             return
-
-
-def kill_rocket_league():
-    print("Attempting to kill Rocket League")
-    os.system('taskkill /f /im RocketLeague.exe')
-    time.sleep(30)
 
 
 def get_map():
@@ -341,9 +322,6 @@ def get_map():
 
     fh.close()
     return game_map
-
-
-# from EastVillage
 
 
 def get_opponent(blue, allowed_opponents, enable_selector, teamsize):

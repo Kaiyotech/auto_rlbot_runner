@@ -211,7 +211,6 @@ def run_match(bot_configs: List[PlayerConfiguration], script_configs: List[Scrip
     # todo reenable this later
     # if kickoff_game:
     #     print("starting kickoff game")
-    #     match_config.enable_state_setting = True
     #     match_config.skip_replays = True
 
     match_manager.start_match(match_config)

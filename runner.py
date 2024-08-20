@@ -107,7 +107,9 @@ class ContinousGames:
         self.start_match(bots, scripts, game_map, snowday, num_players)
         packet: GameTickPacket = self.match_manager.packet
         # wait to start up
-        while packet is None or len(packet.balls) == 0 or len(packet.players) < 2:
+        while packet is None or len(packet.balls) == 0 or len(packet.players) < 2 or \
+                packet.game_info.game_state_type not in (GameStateType.Kickoff,
+                                                         GameStateType.Countdown, GameStateType.Active):
             packet: GameTickPacket = self.match_manager.packet
             time.sleep(1)
         self.getset_director_choice(num_players)

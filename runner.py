@@ -332,6 +332,14 @@ def get_map():
 
 def get_opponent(blue, allowed_opponents, enable_selector, teamsize):
     team = 0 if blue else 1
+    # #testing (doesn't seem to work though, lol)
+    # bot_bundle = []
+    # for _ in range(teamsize):
+    #     bot_bundle.append(get_player_config(team=team,
+    #                                         path="C:\\Users\\kchin\\Code\\Kaiyotech\\rlbot-python-example\\src\\bot.toml",
+    #                                         type=RLBot()))
+    #
+    # return bot_bundle
     split_command = "!setoppo" if not blue else "!setoppoblue"
     oppo_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent.txt" if not blue \
         else "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\opponent_blue.txt"

@@ -1,2 +1,2 @@
-rlbot@ git+https://github.com/VirxEC/python-interface@main
+rlbot@ git+https://github.com/VirxEC/python-interface@master
 pywinauto

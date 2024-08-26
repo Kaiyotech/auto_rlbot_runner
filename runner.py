@@ -107,11 +107,16 @@ class ContinousGames:
         self.start_match(bots, scripts, game_map, snowday, num_players)
         packet: GameTickPacket = self.match_manager.packet
         # wait to start up
+        startup_seconds = 0
         while packet is None or len(packet.balls) == 0 or len(packet.players) < 2 or \
                 packet.game_info.game_state_type not in (GameStateType.Kickoff,
                                                          GameStateType.Countdown, GameStateType.Active):
             packet: GameTickPacket = self.match_manager.packet
             time.sleep(1)
+            startup_seconds += 1
+            if startup_seconds >= 15:
+                print("issue starting up match. Trying again")
+                return
         self.getset_director_choice(num_players)
         self.hide_hud_macro()
         self.periodically_check_match_ended()
@@ -280,6 +285,7 @@ class ContinousGames:
         )
 
     def getset_director_choice(self, num_players):
+        print("getting and setting director choice")
         # players are 123567 director is 9 auto is 0
         my_file = "C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\stream_files\\set_director.txt"
         per_team = num_players // 2

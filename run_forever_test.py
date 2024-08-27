@@ -10,12 +10,15 @@ CURRENT_FILE = Path(__file__).parent
 
 if __name__ == "__main__":
     match_manager = MatchManager(CURRENT_FILE)
+
     match_manager.ensure_server_started()
 
     current_map = 15
-
+    mutator = flat.MutatorSettings()
+    mutator.match_length = flat.MatchLength.Unlimited
     match_settings = flat.MatchSettings(
-        launcher=flat.Launcher.Steam,
+        mutator_settings=mutator,
+        launcher=flat.Launcher.Epic,
         auto_start_bots=True,
         game_mode=flat.GameMode.Soccer,
         enable_state_setting=True,
@@ -23,10 +26,19 @@ if __name__ == "__main__":
         skip_replays=True,
         player_configurations=[
             get_player_config(team=0,
-                              path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot.toml",
+                              path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.toml",
+                              type=flat.RLBot()),
+            get_player_config(team=0,
+                              path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.toml",
+                              type=flat.RLBot()),
+            # get_player_config(team=1,
+            #                   path="C:\\Users\\kchin\\Code\\Kaiyotech\\nectov5\\Nexto\\bot.toml",
+            #                   type=flat.RLBot()),
+            get_player_config(team=1,
+                              path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis_testing\\bot_gp.toml",
                               type=flat.RLBot()),
             get_player_config(team=1,
-                              path="C:\\Users\\kchin\\Code\\Kaiyotech\\nectov5\\Nexto\\bot.toml",
+                              path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis_testing\\bot_gp.toml",
                               type=flat.RLBot()),
         ],
     )
@@ -45,16 +57,16 @@ if __name__ == "__main__":
             or match_manager.packet.game_info.game_state_type
             != flat.GameStateType.Ended
         ):
-            if (
-                match_manager.packet is not None
-                and match_manager.packet.game_info.game_state_type
-                == flat.GameStateType.Countdown
-            ):
-                match_manager.set_game_state(
-                    flat.DesiredGameState(
-                        game_info_state=flat.DesiredGameInfoState(game_speed=10)
-                    )
-                )
+            # if (
+            #     match_manager.packet is not None
+            #     and match_manager.packet.game_info.game_state_type
+            #     == flat.GameStateType.Countdown
+            # ):
+            #     match_manager.set_game_state(
+            #         flat.DesiredGameState(
+            #             game_info_state=flat.DesiredGameInfoState(game_speed=10)
+            #         )
+            #     )
 
             sleep(1)
 

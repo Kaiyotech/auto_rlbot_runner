@@ -60,6 +60,11 @@ STANDARD_MAPS = [
         "neotokyo_hax_p",
         "underwater_grs_p",
         "beach_night_grs_p",
+        "woods_p",
+        # "woods_night_p",
+        # "woods_forest_p",
+        # "bg_woods_night_p",
+        # "bg_woods_day_p"
     ]
 
 MAP_NAME_CONVERSION = {
@@ -116,6 +121,11 @@ MAP_NAME_CONVERSION = {
     "Neotokyo_Hacked": "neotokyo_hax_p",
     "aquadome_salty": "underwater_grs_p",
     "saltyshores_salty_fest": "beach_night_grs_p",
+    "driftwoods": "woods_p",
+    # "driftwoods_night": "woods_night_p",  # maybe broken
+    # "driftwoods_forest": "woods_forest_p",  # maybe broken
+    # "driftwoods_night_bg": "bg_woods_night_p",  # maybe broken
+    # "driftwoods_bg": "bg_woods_day_p"  # maybe broken
 }
 
 

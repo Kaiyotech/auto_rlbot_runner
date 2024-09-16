@@ -89,6 +89,13 @@ class ContinousGames:
         bot_bundles_orange = get_opponent(False, allowed_cars, self.enable_selector, mid)
         self.blue = bot_bundles_blue[0].name
         self.orange = bot_bundles_orange[0].name
+        # check for mixed teams
+        for bot in bot_bundles_blue:
+            if bot.name != self.blue:
+                self.blue = self.blue + '*'
+        for bot in bot_bundles_orange:
+            if bot.name != self.orange:
+                self.orange = self.orange + '*'
         self.num_players = mid
 
         bots = bot_bundles_blue + bot_bundles_orange

@@ -132,6 +132,7 @@ class ContinousGames:
     def start_match(self, bots: List[PlayerConfiguration], scripts: List[ScriptConfiguration], my_map, snowday,
                     num_players):
         self.skip_replay = get_replay_setting()
+        self.match_config.skip_replays = self.skip_replay
         run_match(bots, scripts, my_map, self.kickoff_game, snowday, self.skip_replay,
                   match_config=self.match_config,
                   match_manager=self.match_manager
@@ -370,7 +371,7 @@ def get_opponent(blue, allowed_opponents, enable_selector, teamsize):
                                                 path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.toml",
                                                 type=RLBot()))
     try:
-        with open(oppo_file, 'r') as fh:
+        with (open(oppo_file, 'r') as fh):
             line = fh.readline()
             # if line.startswith("used"):
             #     return bot_bundle
@@ -471,9 +472,11 @@ def get_opponent(blue, allowed_opponents, enable_selector, teamsize):
                                                           type=RLBot())
                     continue
                 # todo convert other bots eventually maybe
-                # elif car == "optiv1":
-                #     bot_bundle[index] = list(scan_directory_for_bot_configs("C:\\Users\\kchin\\Code\\Kaiyotech\\Opti_play_finals_rlbot2023"))[0]
-                #     continue
+                elif car == "optiv1":
+                    bot_bundle[index] = get_player_config(team=team,
+                                                          path="C:\\Users\\kchin\\Code\\Kaiyotech\\Opti_play_v1",
+                                                          type=RLBot())
+                    continue
                 # elif car == "sdc":
                 #     bot_bundle[index] = list(scan_directory_for_bot_configs(
                 #         "C:\\Users\\kchin\\AppData\\Local\\RLBotGUIX\\RLBotPackDeletable\\RLBotPack-master\\RLBotPack\\Self-driving car"))[0]

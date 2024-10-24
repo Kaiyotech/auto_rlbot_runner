@@ -112,13 +112,13 @@ class ContinousGames:
 
         snowday = get_snowday()
         self.start_match(bots, scripts, game_map, snowday, num_players)
-        packet: GameTickPacket = self.match_manager.packet
+        packet: GamePacket = self.match_manager.packet
         # wait to start up
         startup_seconds = 0
         while packet is None or len(packet.balls) == 0 or len(packet.players) < 2 or \
-                packet.game_info.game_state_type not in (GameStateType.Kickoff,
-                                                         GameStateType.Countdown, GameStateType.Active):
-            packet: GameTickPacket = self.match_manager.packet
+                packet.game_info.game_status not in (GameStatus.Kickoff,
+                                                     GameStatus.Countdown, GameStatus.Active):
+            packet: GamePacket = self.match_manager.packet
             time.sleep(1)
             startup_seconds += 1
             if startup_seconds >= 15:
@@ -138,11 +138,9 @@ class ContinousGames:
                   match_manager=self.match_manager
                   )
         if self.test_mode:
-            self.match_manager.set_game_state(
-                DesiredGameState(
-                    game_info_state=DesiredGameInfoState(game_speed=10)
-                )
-            )
+            self.match_manager.set_game_state(game_info=
+                                              DesiredGameInfoState(game_speed=10)
+                                              )
 
     def periodically_check_match_ended(self):
 
@@ -153,16 +151,16 @@ class ContinousGames:
             no_touch_ball = False
             skip_match = get_skip_match()
             # try:
-            packet: GameTickPacket = self.match_manager.packet
+            packet: GamePacket = self.match_manager.packet
             if packet is None:
                 continue
 
             if self.stuck_ball_time != 0 and time.time() - self.stuck_ball_time > self.touch_timeout_sec and self.enforce_no_touch:
                 no_touch_ball = True
             # pause on ended to allow dancing/final scoreboard for a bit (not right now)
-            # if packet.game_info.game_state_type == GameStateType.Ended:
+            # if packet.game_info.game_state_type == GameStatus.Ended:
             #     time.sleep(6)
-            if packet.game_info.game_state_type == GameStateType.Ended or (
+            if packet.game_info.game_status == GameStatus.Ended or (
                     packet.game_info.is_overtime and not self.allow_overtime) or \
                     no_touch_ball or skip_match:
                 print("Match ended. Starting new round...")
@@ -288,9 +286,9 @@ class ContinousGames:
     def hide_hud_macro(self):
         command = "CycleHUD"
         print(f"hiding hud with command: {command}")
-        self.match_manager.set_game_state(
-            DesiredGameState(console_commands=([ConsoleCommand(command=command)]))
-        )
+        self.match_manager.set_game_state(commands=
+                                          ([ConsoleCommand(command=command)])
+                                          )
 
     def getset_director_choice(self, num_players):
         print("getting and setting director choice")
@@ -317,9 +315,10 @@ class ContinousGames:
                     else:
                         command = f"ViewPlayer 1 {value - 5}"
                 print(f"Setting viewer command: {command}")
-                self.match_manager.set_game_state(
-                    DesiredGameState(console_commands=([ConsoleCommand(command=command)]))
-                )
+                self.match_manager.set_game_state(commands=
+                                                  ([ConsoleCommand(command=command)])
+                                                  )
+
         except Exception as e:
             print(f"Error reading director file: {e}")
             return
@@ -474,7 +473,7 @@ def get_opponent(blue, allowed_opponents, enable_selector, teamsize):
                 # todo convert other bots eventually maybe
                 elif car == "optiv1":
                     bot_bundle[index] = get_player_config(team=team,
-                                                          path="C:\\Users\\kchin\\Code\\Kaiyotech\\Opti_play_v1",
+                                                          path="C:\\Users\\kchin\\Code\\Kaiyotech\\Opti_play_v1\\bot_gp.toml",
                                                           type=RLBot())
                     continue
                 # elif car == "sdc":

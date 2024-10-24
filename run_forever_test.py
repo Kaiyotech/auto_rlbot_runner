@@ -28,9 +28,9 @@ if __name__ == "__main__":
             get_player_config(team=0,
                               path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.toml",
                               type=flat.RLBot()),
-            get_player_config(team=0,
-                              path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.toml",
-                              type=flat.RLBot()),
+            # get_player_config(team=0,
+            #                   path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.toml",
+            #                   type=flat.RLBot()),
             # get_player_config(team=0,
             #                   path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.toml",
             #                   type=flat.RLBot()),
@@ -40,15 +40,18 @@ if __name__ == "__main__":
             # get_player_config(team=1,
             #                   path="C:\\Users\\kchin\\Code\\Kaiyotech\\nectov5\\Nexto\\bot.toml",
             #                   type=flat.RLBot()),
-            get_player_config(team=1,
-                              path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis_old_compat\\bot_gp.toml",
-                              type=flat.RLBot()),
-            get_player_config(team=1,
-                              path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis_old_compat\\bot_gp.toml",
-                              type=flat.RLBot()),
+            # get_player_config(team=1,
+            #                   path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis_old_compat\\bot_gp.toml",
+            #                   type=flat.RLBot()),
+            # get_player_config(team=1,
+            #                   path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis_old_compat\\bot_gp.toml",
+            #                   type=flat.RLBot()),
             # get_player_config(team=1,
             #                   path="C:\\Users\\kchin\\Code\\Kaiyotech\\opti_play_redis\\bot_gp.toml",
             #                   type=flat.RLBot()),
+            get_player_config(team=1,
+                              path="C:\\Users\\kchin\\Code\\Kaiyotech\\Opti_play_v1\\bot_gp.toml",
+                              type=flat.RLBot())
         ],
     )
 
@@ -63,8 +66,8 @@ if __name__ == "__main__":
 
         while (
             match_manager.packet is None
-            or match_manager.packet.game_info.game_state_type
-            != flat.GameStateType.Ended
+            or match_manager.packet.game_info.game_status
+            != flat.GameStatus.Ended
         ):
             # if (
             #     match_manager.packet is not None
